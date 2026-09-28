@@ -25,6 +25,34 @@ export default function scenarios({ wait, shot, hold, page }) {
     await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map(([x, y], id) => ({ x, y, id })) });
   };
   return {
+    async play() {
+      // Intro, then walk into the forest and dissolve the first fog by real breathing.
+      await wait(22000);
+      await shot('x1-after-intro');
+      await tp(-50, 40);
+      await wait(4000);
+      await hold('KeyW', 500);
+      await wait(6000);
+      await shot('x2-teaching');
+      await breathe(3);
+      await wait(1500);
+      const light = await page.evaluate(() => window.__lw.game.lightPoints.total);
+      console.log('light after 3 real breaths:', light, '(expect 10)');
+      await shot('x3-released');
+      for (const [x, z] of [[-44, 40], [0, 44], [40, 44]]) {
+        await tp(x, z);
+        await page.evaluate(() => window.__lw.game.debugReleaseLoaded());
+      }
+      await tp(80, 0);
+      await wait(14000);
+      await hold('KeyW', 8000);
+      await wait(1500);
+      await shot('x4-gate');
+      await wait(4000);
+      await shot('x5-card');
+      const card = await page.evaluate(() => document.querySelector('.transition')?.className);
+      console.log('transition state:', card);
+    },
     async mobile() {
       const vp = page.viewportSize();
       await shot('m1-start');
