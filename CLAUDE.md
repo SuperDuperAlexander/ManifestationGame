@@ -14,8 +14,10 @@ Read this file fully before every task. It is the source of truth.
 - Work in small steps. One milestone at a time (see section 11).
 - After each step: run the build, start the dev server, check the browser console for errors.
 - Do not add a dependency without a clear reason. Say why in your report.
-- The existing repo (`GameLightWithin`) contains an older full-3D version.
-  Inspect it first. Reuse what fits. Move old code to `/legacy` instead of deleting it.
+- This repo is `ManifestationGame`. The game is called **Light Within**.
+- The older full-3D version (old repo `GameLightWithin`) lives in `legacy/GameLightWithin/`.
+  Reuse what fits. Move old code to `/legacy` instead of deleting it.
+- Context, current status and next step: `docs/HANDOVER.md`. All decisions made while building: `docs/DECISIONS.md`.
 
 ---
 
@@ -323,6 +325,7 @@ Fairy lines (drafts):
 ## 11. Milestones
 
 Build in this order. Finish and report after each one.
+**Status 2026-09-28:** 1–7 done. Next: Alexander's feedback (`docs/HANDOVER.md` section 6), then 8.
 
 1. **Setup + greybox**: Vite + TypeScript + Babylon.js. Sort assets into subfolders (9.1). Asset conversion script (9.2). Flat ground, placeholder props, procedural player, WASD, fixed follow camera, debug overlay.
 2. **Breathing**: `BreathSystem`, Space/Shift, glow + light ring, rhythm guide.
