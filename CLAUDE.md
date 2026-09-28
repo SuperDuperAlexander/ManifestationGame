@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # CLAUDE.md — Light Within
 
 You build **Light Within**, a calm spiritual browser game in **Babylon.js**.
@@ -75,10 +74,20 @@ The world is **simple real 3D** that looks like **paper layers**.
 - Paper cards face the camera direction (fixed orientation, or Y-axis billboard). Never full billboard.
 
 ### Parallax layers
-- 4 layers per region: `sky`, `mountains_far`, `landmark_far`, `mountains_near`.
+- 5 layers per region, back to front:
+  1. `sky` (opaque)
+  2. `mountains_farthest`
+  3. `mountains_far`
+  4. `landmark_far`
+  5. `mountains_near`
 - Each layer is a large plane at a different distance. Far layers move slower relative to the camera.
 - Implement as child planes of a "backdrop" node that follows the camera with a per-layer factor
-  (sky = 1.0 follows fully, near hills ≈ 0.6).
+  (sky = 1.0 follows fully, farthest ≈ 0.9, far ≈ 0.8, landmark ≈ 0.75, near hills ≈ 0.6).
+- **Atmospheric haze**: each layer has a `haze` value 0–1 (in JSON). The shader blends the layer color
+  towards `PALETTE.ivory`/powder blue and lowers contrast. The landmark art is too sharp and warm
+  for its distance — start with `haze: 0.35` on it.
+- The landmark's bottom floats in the air. Position it so `mountains_near` covers its bottom edge.
+- Order back to front must be stable: use `renderingGroupId` or explicit `alphaIndex`, not depth sorting.
 
 ---
 
@@ -115,12 +124,13 @@ One file per chapter: `public/data/chapters/ch1.json`.
   "id": "ch1",
   "title": "The Awakening",
   "assetBase": "/assets/ch1/",
-  "backdrop": {
-    "sky": "bg/sky.png",
-    "mountains_far": "bg/mountains_far.png",
-    "landmark_far": "bg/landmark_far.png",
-    "mountains_near": "bg/mountains_near.png"
-  },
+  "backdrop": [
+    { "id": "sky",                "image": "bg/sky",                "parallax": 1.0,  "haze": 0.0 },
+    { "id": "mountains_farthest", "image": "bg/mountains_farthest", "parallax": 0.9,  "haze": 0.2 },
+    { "id": "mountains_far",      "image": "bg/mountains_far",      "parallax": 0.8,  "haze": 0.1 },
+    { "id": "landmark_far",       "image": "bg/landmark_far",       "parallax": 0.75, "haze": 0.35 },
+    { "id": "mountains_near",     "image": "bg/mountains_near",     "parallax": 0.6,  "haze": 0.0 }
+  ],
   "playerStart": { "zone": "meadow", "pos": [0, 0, 0] },
   "bridge": { "zone": "chasm", "planksRequired": 5, "planksTotal": 6 },
   "zones": [
@@ -128,11 +138,11 @@ One file per chapter: `public/data/chapters/ch1.json`.
       "id": "meadow",
       "neighbours": ["clearing"],
       "ground": [
-        { "type": "plane", "texture": "textures/ground_grass.png", "size": [40, 40], "pos": [0, 0, 0] }
+        { "type": "plane", "texture": "textures/ground_grass", "size": [40, 40], "pos": [0, 0, 0] }
       ],
       "props": [
-        { "asset": "props/tree_round.png", "pos": [-6, 0, 4], "scale": 4 },
-        { "asset": "props/flowers_white.png", "pos": [2, 0, -3], "scale": 1, "scatter": 12, "radius": 10 }
+        { "asset": "props/tree_round", "pos": [-6, 0, 4], "scale": 4 },
+        { "asset": "props/flowers_white", "pos": [2, 0, -3], "scale": 1, "scatter": 12, "radius": 10 }
       ],
       "blockades": [],
       "hints": [
@@ -151,6 +161,7 @@ One file per chapter: `public/data/chapters/ch1.json`.
 }
 ```
 
+- Image paths in JSON have **no file extension**. The loader adds `.webp` (see section 9).
 - Validate chapter JSON at load time (TypeScript types + a small runtime check).
 - Missing zone fields fall back to sensible defaults.
 
@@ -219,7 +230,7 @@ One file per chapter: `public/data/chapters/ch1.json`.
 - `GlowLayer` only on fairy, portal, light bridge, and the breathing ring. Include list only.
 - Mobile: `engine.setHardwareScalingLevel(1.5–2)` based on device pixel ratio and fps.
 - Draw calls budget: < 100 on mobile.
-- Texture size: max 2048 px. Later convert to KTX2 (compressed GPU texture format).
+- Texture size: max 2048 px. Game uses **WebP** (section 9). KTX2 only later, if GPU memory on phones is a problem.
 - Dispose zones that are out of range. Watch memory.
 - Add a debug overlay (toggle with `F3`): fps, draw calls, active meshes, loaded zones.
 
@@ -227,30 +238,63 @@ One file per chapter: `public/data/chapters/ch1.json`.
 
 ## 9. Assets
 
-Images arrive from Alexander step by step. **The game must run without them.**
-If an asset is missing, use a colored placeholder (plane in palette color with the file name as label).
+All 22 images for chapter 1 are **ready** as PNG. The game must still run if one is missing:
+use a colored placeholder (plane in palette color with the file name as label).
+
+### 9.1 Where the images are
+- Alexander has put all PNG originals into `public/assets/ch1/`.
+- **First task:** check the folder. If the PNGs lie directly in `public/assets/ch1/`,
+  move them into these subfolders (use `git mv` if tracked). Do not rename files.
 
 ```
-public/
-  assets/
-    ch1/
-      bg/        sky.png, mountains_far.png, landmark_far.png, mountains_near.png
-      textures/  ground_grass.png, ground_path.png, ground_stone.png, ground_water.png
-      props/     tree_round.png, tree_cypress.png, tree_old_oak.png, bush.png,
-                 rock_large.png, rocks_small.png, flowers_white.png, grass_tuft.png,
-                 well.png, ruin_pillar.png, ruin_arch.png, monolith_rune.png, gate_portal.png
-  data/
-    chapters/ch1.json
-    dialogue/en.json
+public/assets/ch1/
+  bg/        sky.png, mountains_farthest.png, mountains_far.png, landmark_far.png, mountains_near.png
+  textures/  ground_grass.png, ground_path.png, ground_stone.png, ground_water.png
+  props/     tree_round.png, tree_cypress.png, tree_old_oak.png, bush.png,
+             rock_large.png, rocks_small.png, flowers_white.png, grass_tuft.png,
+             well.png, ruin_pillar.png, ruin_arch.png, monolith_rune.png, gate_portal.png
+public/data/
+  chapters/ch1.json
+  dialogue/en.json
+scripts/
+  convert-assets.mjs
 ```
 
+- If a file is missing or has another name: list it in your report. Do not guess.
+- PNG = original (source). WebP = what the game loads. Both live side by side in the same folder.
+- Never edit or delete the PNG originals.
+
+### 9.2 Conversion script `scripts/convert-assets.mjs`
+- Use `sharp` (dev dependency).
+- Walk `public/assets/` recursively. For every `.png`, write a `.webp` with the same name **next to it**.
+- Skip a file if the WebP is newer than the PNG (fast re-runs).
+- Settings:
+  - `bg/` and `props/`: WebP quality 85, `alphaQuality: 90`, keep transparency.
+  - `textures/`: WebP quality 85. Must stay seamless: no trimming, no resizing that breaks tiling.
+  - `bg/sky`: opaque, quality 80.
+- `props/` only: trim fully transparent margins (keep a 4 px border). Keeps cards tight and saves fill-rate.
+  Write the trimmed result only to the WebP. The PNG stays untouched.
+- If a PNG still has a solid magenta background (#FF00FF): key it out to transparency before converting.
+- Max size 2048 px on the long side. Never upscale.
+- Print a table at the end: file, PNG size, WebP size, saving in %.
+- npm scripts:
+  - `"assets": "node scripts/convert-assets.mjs"`
+  - `"predev"` and `"prebuild"` run `assets` automatically.
+- Optional: `--watch` flag that re-converts when a PNG changes.
+- **Production build:** PNGs must not ship. After `vite build`, delete `dist/**/*.png`
+  (small post-build step or Vite plugin). Only `.webp` goes online.
+
+### 9.3 Loading rules
+- Loader resolves `assetBase + image + ".webp"`.
 - Sizes: backgrounds 1536×1024, textures 1024×1024 (seamless), props 1024×1024, gate 1024×1536.
-- Props have transparent backgrounds. If an image still has a solid magenta background (#FF00FF),
-  handle it in `scripts/prepare-assets` (e.g. with `sharp`): key out magenta, trim empty margins.
 - Paper card size: read the image aspect ratio and keep it. The card pivot is the bottom center.
+- **Free variation for props** (per instance, from JSON or random with a fixed seed):
+  scale ±15 %, slight hue/brightness shift, slight rotation around Y.
+  One tree image must look like many trees.
+- **Do NOT mirror props by default.** All art is lit from the right. Mirroring flips the light and breaks
+  the scene. Only allow mirroring per asset with `"mirror": true` in JSON (e.g. grass, flowers).
+- The sun in `sky` sits upper center/right. Keep the scene's light direction "from the right" consistent.
 - Not from images (all code): player, fairy, fog, glow, light bridge, UI.
-
----
 
 ## 10. Content (English) — drafts, Alexander must approve
 
@@ -279,7 +323,7 @@ Fairy lines (drafts):
 
 Build in this order. Finish and report after each one.
 
-1. **Setup + greybox**: Vite + TypeScript + Babylon.js. Flat ground, placeholder props, procedural player, WASD, fixed follow camera, debug overlay.
+1. **Setup + greybox**: Vite + TypeScript + Babylon.js. Sort assets into subfolders (9.1). Asset conversion script (9.2). Flat ground, placeholder props, procedural player, WASD, fixed follow camera, debug overlay.
 2. **Breathing**: `BreathSystem`, Space/Shift, glow + light ring, rhythm guide.
 3. **Fog blockades**: fog cloud with text, push/strike reaction, dissolve by breathing, light points, HUD.
 4. **Fairy**: intro sequence, orbit, hints, dialogue from `en.json`.
@@ -309,221 +353,3 @@ src/
 - TypeScript strict mode.
 - All tunable numbers live in `config/tuning.ts`.
 - No game content (text, positions) hard-coded in systems.
-=======
-# Light Within — project rules
-
-A calm 3D browser game that teaches Dr. Rulin Xiu's teaching on how to manifest.
-Chapter 1 is "Receive". These rules hold for every later chapter too.
-
-## Content rules (must follow)
-
-- No medical or healing claims anywhere. Breathing is never described as healing.
-- Manifestation is always framed as personal reflection, never as a promise.
-- Dr. Rulin Xiu is named in third person only in the game's own writing. The one
-  exception is the guide: she may carry a recorded teaching in which Dr. Rulin
-  speaks for herself. That teaching is her words, presented as hers, and it is
-  never put into the game's voice or the guide's.
-- Blockages look soft and melancholic, never scary or horror-like.
-- No enemies, no points, no score, no "game over", no timers.
-- Exactly one companion: the guide, a small light that travels with the player.
-  She is the only helper the game has and no chapter adds another.
-- The guide leads. She shows the way through the world, she carries short
-  messages, and at a blockage she opens a teaching. What she never does is
-  take the moment: she speaks before or after an action, never during a
-  breath, and she is always quiet while the player is breathing.
-- The action still teaches the idea first. The guide's words come **after** the
-  player has met the thing they are about, never as a briefing beforehand.
-  Wherever a scene can be understood by doing it, she stays silent.
-- The guide asks once. A message is shown once and is not repeated unless the
-  player has been lost for a long time. She never nags.
-- All player-facing text lives in `src/content/strings.en.ts`. A translation is a
-  second file that satisfies `GameStrings` plus one entry in `LOCALES`.
-- Player-facing text: short sentences, sentence case, no all caps, no filler.
-- The working title lives in one constant, `GAME_TITLE` in `src/content/strings.en.ts`.
-
-## Stack (fixed)
-
-- TypeScript in strict mode. Vite. Babylon.js plain — no React, no scene editor,
-  no `.babylon` or glTF files. Everything is built in code.
-- Ground height and collision read the heightfield the terrain was built from.
-  No physics engine, no acceleration structure, no raycast against the mesh.
-- Babylon `PostProcess` passes for post-processing.
-- Custom GLSL for the painted look. The grey-to-colour system is one material
-  plugin on the lit surfaces and one shared piece of code in the raw shaders.
-- Web Audio API for all sound. Sounds are generated in code; there are no audio files.
-- UI overlays in plain HTML and CSS on top of the canvas.
-- Saving: `localStorage` only.
-- Tests: Vitest for logic, Playwright for browser runs and screenshots.
-- ESLint and Prettier.
-- Deploy target: static hosting. No server.
-
-## Hard limits
-
-- **No request ever leaves the origin.** No analytics, no external fonts, no
-  CDNs, no streaming. A Playwright test fails the build if any request goes
-  anywhere but the game's own origin.
-- Loading from the game's own origin, after the start, is allowed and is how
-  the large things are kept out of the first download: the handwriting font
-  already works this way, and a teaching video works the same way. It is
-  fetched from `public/` when it is first needed, never before.
-- Outside assets are allowed where they raise the quality, but only under a
-  licence that permits commercial use without attribution, and only if they can
-  be bundled rather than fetched at run time. `@pmndrs/assets` is CC0 and ships
-  as data, which keeps the no-network rule intact. The geometry is still
-  generated in code.
-
-## Performance budget
-
-- Initial download 6 MB or less.
-- Total 15 MB or less, not counting teaching videos. Each video is fetched
-  only when its blockage is reached, so it is never part of what a player
-  waits for at the start, and a chapter that ships none costs nothing.
-- A teaching video is 720p or smaller, under 6 MB, and has a text version
-  that says the same thing. The text is what a player on a slow connection,
-  a muted device or a screen reader gets, so it is never a summary.
-- Desktop mid-range laptop: 60 fps. Mid-range Android phone: 30 fps or more.
-- Cap device pixel ratio at 1.5 on mobile.
-- Three quality tiers: low, medium, high. The tier is picked from a short
-  frame-time test at start and can be changed in settings.
-- Low tier: painting filter at half resolution, fewer particles, fewer grass cards.
-- A watchdog watches the real frame rate during play and steps the tier down
-  when a device cannot keep up. It only ever steps **down**, so it cannot
-  oscillate. It is off as soon as the player picks a tier by hand.
-- Grass is built once at the highest count, as thin instances of one card. A
-  tier only changes how many of them are drawn and how close they fade, so a
-  quality change takes effect at once. The scattered trees are thin instances
-  of fourteen originals, so a wood costs about what its originals cost.
-  `skyStrokes` and `treeBlobs` are baked into the geometry at world build.
-
-## Art rules
-
-- Procedural geometry only: soft rolling hills, rounded rocks, stylised trees
-  (trunk plus clustered soft blobs), a stone spring basin, a sign stone, a bridge.
-- Grass and flowers are camera-facing cards with procedural brush-stroke alpha.
-- Sky is a large dome with a painted gradient and soft cloud strokes from noise.
-- Surfaces are physically based and rough, never metal. The shadowed side of
-  everything is filled by a reflection probe rendered from the game's own sky,
-  so the sky light always matches what the player can see and greys and warms
-  with the valley for free. There is no ambient fill light on top of it: a flat
-  fill only washes the contrast out.
-- Tone mapping and the linear to sRGB conversion happen once, in the final
-  pass, so the raw-shader sky, grass and pollen get the same treatment as the
-  lit materials instead of drifting away from them.
-- The rim light is additive and sits on top of real lighting, so it is kept
-  low. Tuned against flat light it blows out anything seen edge on.
-- Light is baked into vertex colours or the shader, plus one soft directional
-  light. That light casts a real shadow map on the medium and high tiers: the
-  map covers a box that follows the player and is snapped to whole texels, so
-  it stays sharp and does not crawl. The low tier falls back to the blob shadow
-  under the player. Grass never takes part in the shadow pass; 60,000
-  alpha-tested cards would cost more than the rest of the valley together.
-- Air is never empty. Pollen drifts in a box that repeats around the camera, so
-  the player cannot walk out of the weather and nothing moves on the processor.
-- The player has arms and legs and they are animated from the movement itself,
-  in code. There is no skeleton and no animation clip: the body rises and falls
-  twice per stride, rolls, leans into the direction of travel, and the limbs
-  swing against each other. The phase follows distance, not time, so the step
-  matches the speed. The cloak ends at the knee so the legs can be seen.
-- The guide is a small light, never a face and never a body. She grows and
-  warms with the player's own light, so what she looks like is a reading of
-  how far they have come.
-- Painting filter: Kuwahara-style, plus procedural paper grain and a soft vignette.
-- Grey-to-colour: every world material shares one shader chunk. A uniform array
-  holds restored zones (centre, radius, strength). Inside a zone the material
-  shows full colour; outside it is desaturated, slightly blue-grey and held
-  below the restored side in brightness. Zones grow over 2 to 4 seconds.
-  Chapter end sets the global colour value to 1.
-- Palette lives in `src/content/palette.ts`. Do not invent colours elsewhere.
-- UI: quiet and minimal, one self-hosted humanist sans, frosted semi-transparent
-  panels with a warm tint, no harsh borders, touch targets of at least 48 px.
-
-## Code rules
-
-- All tunable numbers live in `src/content/chapter1.ts`. No magic numbers in systems.
-- Systems talk through the typed event bus in `src/core/events.ts`.
-- Keep systems testable without a graphics device wherever possible. The logic
-  systems (`breath`, `calm`, `light`, `transform`, `manifest`, `checks`) import
-  nothing from the engine, and the follow camera holds only maths, so the tests
-  that matter run in plain Vitest with no canvas.
-
-## Accessibility
-
-- The guide's messages are readable text first. They do not block play, they
-  can be dismissed with a key, they meet the same contrast rule as every other
-  panel, and anything she says is also shown, never only heard.
-- Rhythm presets: normal (in 3, out 4), slow (in 4, out 6), easy (in 2, out 3).
-  These are shorter than a breathing practice would use, on purpose. Four in and
-  six out is a fine thing to sit with, but in a game it is ten seconds of
-  holding a key before anything happens, and the player feels the wait rather
-  than the breath. `slow` keeps the longer rhythm for anyone who wants it.
-- Tests read durations from the presets, never as written-out numbers, so
-  retuning the rhythm changes the game and not the tests.
-- The player is never held still. They walk from the first second, but inside
-  their own mist and with a short stride, and pushing on without stopping
-  thickens it. One finished breath clears it for good. The penalty is something
-  you can see, which is the only kind worth having in a game with no failure.
-- On touch the two halves of the breath are one button per thumb: breathe in on
-  the left, breathe out on the right. Both are pressed, neither is sat on.
-- One breath uses two keys: hold space to breathe in, hold shift to breathe
-  out. Letting go of a key is not an action; the out-breath is half the
-  practice and needs its own press. On touch there are two buttons.
-- Ask for repetition once. Every gate in the chapter is one calm breath: waking
-  the valley, revealing a hidden spring, drawing a spring dry, each step of the
-  fog, and the thanks on the bridge. The fog already asks the player to see it,
-  stand in the wind and walk into the middle; a second breath on top of that is
-  only waiting.
-- Reduced motion: no camera shake, no trembling circle, slower colour transitions.
-- Every important cue is visual **and** audio.
-- Colour is never the only cue. A restored area is also **brighter** than a grey
-  one, so the grey-to-colour change reads without colour perception. A browser
-  test measures this in greyscale.
-- All UI works with the keyboard. Visible focus states.
-- Text contrast meets WCAG AA (Web Content Accessibility Guidelines, level AA).
-
-## Build stamp
-
-The start screen shows the git commit the build came from. Three times running,
-a change was reported as done and the game on the other screen was an older
-build. If the stamp does not match what was just shipped, the build is old,
-whatever anyone believes.
-
-## Debug
-
-- `?debug=1` debug panel, `?scene=N` jump to a scene, `?autobreathe=1` automatic
-  calm breathing for Playwright, `?nopaint=1` turn the painting filter off.
-- `?chapter=N` open a chapter, `?autoname=1` answer the naming panel,
-  `?calm=0.2` force the calm value.
-- `?safe=1` draw the scene straight to the canvas, with no post-processing.
-  It is a way out and a way to find out: a device that is black through the
-  composer and right in safe mode has a problem with the render targets, and
-  one that is black either way has a problem with the world's own shaders.
-- The debug panel opens with a device report: the GPU as the driver names it,
-  the WebGL version, whether fragment shaders really have high precision,
-  whether half-float buffers work, the canvas size against the pixels drawn,
-  and anything the driver said while compiling a shader. A phone cannot be
-  reasoned about from here; it has to be asked.
-
-## Shaders
-
-- Geometry is generated in `src/render/geometry.ts`. Front faces wind
-  counter-clockwise and the scene is right-handed; the engine assumes the
-  other way round unless every mesh and every culling material is told, and
-  the cost of getting it wrong is the ground quietly disappearing.
-- Every custom shader declares `precision highp float;` in **both** stages.
-  A desktop driver and a software renderer both treat `mediump` as full
-  precision, so a shader a mobile GPU cannot run compiles and looks right
-  here. At `mediump` a float holds about three digits and tops out near
-  65504, which the usual noise idiom (`fract(sin(dot(p, k)) * 43758.5453)`)
-  goes straight through.
-- No `pow()` with an exponent in the hundreds. Drivers disagree about it and
-  one `inf` in a colour turns the whole surface black. Use an angle and a
-  `smoothstep` instead.
-- No variable in an inner scope with the same name as one outside it.
-
-## Commands
-
-- `npm run dev` — dev server
-- `npm run check` — typecheck, lint and unit tests
-- `npm run build` — typecheck and production build
-- `npm run e2e` — Playwright run, writes `screenshots/`
->>>>>>> efc9b0c07ebb61e1980dc4b618b81f7d6be748c6

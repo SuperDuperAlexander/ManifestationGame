@@ -1,0 +1,7 @@
+node_modules
+dist
+.vite
+*.local
+# Generated from the PNG originals by scripts/convert-assets.mjs
+public/assets/**/*.webp
+screenshots
