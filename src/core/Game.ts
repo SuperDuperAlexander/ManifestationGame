@@ -18,6 +18,9 @@ import { ZoneStreamer } from '../world/ZoneStreamer';
 import { LightBridge } from '../gameplay/LightBridge';
 import { ChapterGate } from '../gameplay/ChapterGate';
 import { Transition } from '../ui/Transition';
+import { Performance, isTouchDevice } from './Performance';
+import { Joystick } from '../ui/Joystick';
+import { BreathButton } from '../ui/BreathButton';
 import { BreathSystem } from '../player/BreathSystem';
 import { BreathVisuals } from '../player/BreathVisuals';
 import { BreathGuide } from '../ui/BreathGuide';
@@ -74,6 +77,7 @@ export class Game {
   readonly transition: Transition;
   private blockadesReleased = 0;
   private complete = false;
+  readonly performance: Performance;
   /** True on touch devices: letting go of the breath button breathes out. */
   touchMode = false;
   private time = 0;
@@ -110,6 +114,11 @@ export class Game {
     this.companion = new Companion(this.fairy, this.dialogue, this.events, this.sound, () => this.touchMode);
     this.input.attach();
     this.input.onFirstInteraction(() => this.sound.unlock());
+    // Touch screens: joystick on the left, one breath button on the right, tap near fog to push.
+    this.touchMode = PARAMS.has('touch') || isTouchDevice();
+    this.performance = new Performance(this.engine, this.touchMode);
+    if (this.touchMode) this.setupTouch();
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     this.terrain = new Terrain(this.scene, this.assets);
     this.backdrop = new Backdrop(this.scene, this.rig, this.assets);
     this.events.on('zoneEntered', (e) => this.onZoneEntered(e.id));
@@ -229,6 +238,32 @@ export class Game {
     }
   }
 
+  private setupTouch(): void {
+    document.body.classList.add('touch');
+    const left = document.createElement('div');
+    left.className = 'touch-zone touch-left';
+    const right = document.createElement('div');
+    right.className = 'touch-zone touch-right';
+    this.ui.append(left, right);
+    new Joystick(this.ui, this.input, left);
+    new BreathButton(this.ui, this.input);
+    // A short tap on the right side counts as a push (only does something next to a fog).
+    let downAt = 0;
+    let downX = 0;
+    let downY = 0;
+    right.addEventListener('pointerdown', (e) => {
+      downAt = performance.now();
+      downX = e.clientX;
+      downY = e.clientY;
+      this.input.markInteracted();
+    });
+    right.addEventListener('pointerup', (e) => {
+      if (performance.now() - downAt < 300 && Math.hypot(e.clientX - downX, e.clientY - downY) < 20) {
+        this.input.pushPressed = true;
+      }
+    });
+  }
+
   /** The bridge, the gate and walking through it. */
   private updateGoal(dt: number): void {
     const px = this.player.position.x;
@@ -328,6 +363,7 @@ export class Game {
       planks: this.bridge ? `${this.bridge.plankCount}${this.bridge.isWalkable ? ' walkable' : ''}` : '-',
       fog: this.fogs.nearest ? `${this.fogs.nearest.id} d=${this.fogs.nearest.density.toFixed(2)}` : '-',
     };
+    this.performance.update(dt);
     this.debug.update(dt);
     this.scene.render();
     this.input.endFrame();

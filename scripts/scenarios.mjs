@@ -19,7 +19,46 @@ export default function scenarios({ wait, shot, hold, page }) {
     await wait(1800);
   };
   const pz = () => page.evaluate(() => window.__lw.game.player.position.z);
+  let cdp = null;
+  const touch = async (type, points) => {
+    cdp ??= await page.context().newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map(([x, y], id) => ({ x, y, id })) });
+  };
   return {
+    async mobile() {
+      const vp = page.viewportSize();
+      await shot('m1-start');
+      // Joystick: press on the left, drag up.
+      const jx = vp.width * 0.25;
+      const jy = vp.height * 0.7;
+      await touch('touchStart', [[jx, jy]]);
+      for (let i = 1; i <= 6; i++) {
+        await touch('touchMove', [[jx, jy - i * 10]]);
+        await wait(30);
+      }
+      await wait(1500);
+      await shot('m2-joystick');
+      const z1 = await page.evaluate(() => window.__lw.game.player.position.z);
+      await touch('touchEnd', []);
+      console.log('walked north with joystick to z =', z1.toFixed(2));
+      // Breath button: hold 4 s, then let go.
+      const b = await page.evaluate(() => {
+        const r = document.querySelector('.breath-button').getBoundingClientRect();
+        return [r.left + r.width / 2, r.top + r.height / 2];
+      });
+      await touch('touchStart', [b]);
+      await wait(3500);
+      await shot('m3-inhale');
+      const s1 = await page.evaluate(() => [window.__lw.game.breath.state, window.__lw.game.breath.breathLevel]);
+      await touch('touchEnd', []);
+      await wait(1500);
+      const s2 = await page.evaluate(() => [window.__lw.game.breath.state, window.__lw.game.breath.breathLevel]);
+      await shot('m4-exhale');
+      console.log('holding button:', JSON.stringify(s1), 'after letting go:', JSON.stringify(s2));
+      await wait(3000);
+      const st = await page.evaluate(() => window.__lw.stats());
+      console.log('mobile stats', st.fps, 'fps', st.drawCalls, 'draws, scaling', st.scaling.toFixed(3));
+    },
     async partial() {
       await tp(-20, 44);
       const n = await page.evaluate(() =>

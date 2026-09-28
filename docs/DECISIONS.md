@@ -93,3 +93,19 @@ There is no chapter 2 yet, so the card stays. Reload the page to play again.
 
 **D21. Old hints are skipped.** If the player walked away before the fairy could show a hint,
 she does not show it later somewhere else. After a release she only speaks if she is not talking already.
+
+## Milestone 7 — Mobile
+
+**D22. Touch controls appear only on touch screens** (or with `?touch` in the address).
+Joystick: touch anywhere on the left half, it appears under the finger. Breath: one round button
+bottom right; hold = breathe in, let go = the breath flows out by itself. A short tap on the right
+half next to a fog counts as a push. The rhythm guide sits on the breath button.
+
+**D23. "Hardware scaling" is measured against the phone's own pixels.** CLAUDE.md asks for 1.5–2.
+Taken literally (CSS pixels) that would be very blurry on modern phones, so the game renders at
+1 rendered pixel per 1.25–2 device pixels. It starts at 1.5 and adapts every 2.5 s:
+below 38 fps it renders fewer pixels, above 56 fps more. Desktop renders at full sharpness (max 2×).
+Settings: `TUNING.performance`, `src/core/Performance.ts`.
+
+**D24. Portrait phones get a wider view** (vertical field of view 1.0 instead of 0.72),
+so enough of the world fits left and right.
