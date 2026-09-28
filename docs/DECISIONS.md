@@ -185,3 +185,10 @@ start (`TUNING.bridge.nearDistance`), the planks appear one after another.
 bright from the start. Near an active fog it grows darker and paler (from 16 m, full at 3 m); walking
 away brings the light back. A fog breathed thinner darkens less, so breathing brightens the world.
 Pushing still darkens further (D36). Each release adds a warm golden lift. Settings: `TUNING.mood`.
+
+**D42. The new figure from `figure-kit/` is the player now** (`src/player/PlayerVisual.ts`,
+`src/player/ScarfTail.ts`): a cloak that trails and swings (a spring), soft folds, a hood with a face,
+a scarf with real physics, legs and boots, leaning, nodding and looking around. Its numbers moved to
+`TUNING.figure`. It uses the game's own toon shader (so the world mood darkens it near a fog) and the
+game's halo, which also shows the inner light (D37). The old figure is in `legacy/figure-v1/`.
+`figure-kit/` stays as Alexander's standalone demo; changes there do not reach the game by themselves.

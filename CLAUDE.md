@@ -229,7 +229,8 @@ One file per chapter: `public/data/chapters/ch1.json`.
 - All fairy lines live in `public/data/dialogue/en.json`, not in code.
 
 ### 7.6 Player character (procedural, no model file)
-- Built from primitives: cone or lathe body (cloak), hood, small face shadow, two small feet.
+- Built in code (`src/player/PlayerVisual.ts`, from `figure-kit/`, see D42): a swinging cloak bell, a hood
+  with a face shadow, a scarf with physics (`ScarfTail.ts`), legs and boots. All numbers in `TUNING.figure`.
 - Cloak color `PALETTE.cloak`, unlit or flat toon shading.
 - Animation in code: walk bob, cloak sway, feet steps, idle breathing scale, glow when inhaling.
 - Keep a clean interface (`PlayerVisual`) so it can later be swapped for a GLB model.
