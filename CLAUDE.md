@@ -126,6 +126,7 @@ The world is **simple real 3D** that looks like **paper layers**.
 - One winding path leads from the meadow to the chasm. The player may walk anywhere on the floor,
   but the river and the hill ridge leave only one way through: the ford and the pass.
 - Each fog sits on that way and closes it. Two calm breaths dissolve one fog: 10 light points each.
+- The world is bright; near an active fog it darkens and pales, and brightens again further away (D41).
 - 20 points (both fogs) build the light bridge. The gate opens when the bridge is walkable.
 - The larger chapter (forest, ruins, clearing, 6 fogs) comes back after the MVP.
 
@@ -212,7 +213,8 @@ One file per chapter: `public/data/chapters/ch1.json`.
 
 ### 7.4 Light points and the bridge
 - HUD shows light points softly (top corner, minimal).
-- At the chasm: planks of light appear one by one, one per dissolved blockade.
+- Each dissolved blockade earns planks (`planksPerRelease`). The bridge builds only when all needed planks
+  are earned and the player is at the chasm; then the planks appear one by one (D40).
 - With `planksRequired` reached, the bridge is walkable. The far side leads through the chapter gate.
 
 ### 7.5 The Fairy (companion)

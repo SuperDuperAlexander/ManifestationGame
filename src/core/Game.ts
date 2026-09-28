@@ -294,7 +294,7 @@ export class Game {
     const pz = this.player.position.z;
     if (this.bridge && this.chapter?.spec.bridge) {
       const [bx, bz] = this.chapter.spec.bridge.from;
-      this.bridge.playerNear = Math.hypot(px - bx, pz - bz) < 15;
+      this.bridge.playerNear = Math.hypot(px - bx, pz - bz) < TUNING.bridge.nearDistance;
       this.bridge.update(dt);
       this.bridge.setVisible(
         this.streamer?.boundsVisible({ minX: bx - 3, maxX: bx + 3, minZ: bz - 1, maxZ: this.chapter.spec.bridge.to[1] + 1, top: 2 }) ?? true,
@@ -354,7 +354,7 @@ export class Game {
     this.fogs.update(dt, this.player, this.breath, this.input.pushPressed);
     this.breathVisuals.target = this.fogs.hasTarget ? this.fogs.streamTarget : null;
     this.breathVisuals.update(dt, this.breath, this.player.position);
-    this.mood?.update(dt, this.breath.lightThisFrame);
+    this.mood?.update(dt, this.breath.lightThisFrame, this.fogs.nearest, this.fogs.nearestDistance);
     this.releaseGlow = Math.max(0, this.releaseGlow - dt / 3.5);
     for (let i = this.beams.length - 1; i >= 0; i--) {
       this.beams[i]!.update(dt);

@@ -151,16 +151,24 @@ export const TUNING = {
   },
 
   /**
-   * The mood of the world: dim and pale at the start, brighter and warmer with every released
-   * blockade. Pushing a fog darkens everything; breathing brings the light back.
+   * The mood of the world: bright and friendly, but it darkens and pales as the player comes near
+   * an active fog, and brightens again when they walk away or breathe the fog thinner.
+   * Pushing a fog darkens it further; every release adds a warm golden lift.
    */
   mood: {
-    /** Brightness and colour strength before any blockade is released. */
-    startBrightness: 0.8,
-    startSaturation: 0.62,
+    /** A fog starts to darken the world at this distance from its edge (metres) ... */
+    nearOuter: 16,
+    /** ... and has its full effect at this distance. */
+    nearInner: 3,
+    /** Brightness, colour strength and dark tint right next to a full fog. */
+    nearBrightness: 0.66,
+    nearSaturation: 0.45,
+    nearDark: 0.3,
+    /** How fast the world follows the player's distance to the fog (higher = quicker). */
+    nearSharpness: 2.5,
     /** Warm golden lift once everything is released. */
     endWarmth: 1,
-    /** How fast the mood moves to its new level after a release, per second. */
+    /** How fast the warm lift grows after a release, per second. */
     riseSpeed: 0.35,
     /** Darkness from one push: a short flash, and a part that stays until you breathe. */
     pushFlash: 0.6,
@@ -191,6 +199,8 @@ export const TUNING = {
   },
 
   bridge: {
+    /** The bridge builds when the player is this close to its start (and all planks are earned). */
+    nearDistance: 9,
     plankAppearTime: 1.1,
     plankWidth: 2.6,
     /** Delay between two planks when several appear together. */

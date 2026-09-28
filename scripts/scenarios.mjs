@@ -160,10 +160,11 @@ export default function scenarios({ wait, shot, hold, page }) {
       const n = await page.evaluate(() => ['b_worthy'].filter((id) => window.__lw.game.fogs.debugRelease(id)).length);
       console.log('released blockades', n);
       await tp(0, 17);
-      await page.waitForFunction(() => window.__lw.game.bridge.plankCount >= 3, null, { timeout: 120000 });
+      await wait(8000);
+      console.log('after one fog, planks shown:', await g(() => window.__lw.game.bridge.plankCount), '(must be 0)');
       await walkNorthUntil(21, 15000);
-      console.log('with 3 planks, z =', (await pz()).toFixed(2), '(must stay below 20)');
-      await shot('p1-half-bridge');
+      console.log('after one fog, z =', (await pz()).toFixed(2), '(must stay below 20)');
+      await shot('p1-no-bridge-yet');
       await tp(6, 8);
       await g(() => window.__lw.game.fogs.debugRelease('b_angry'));
       await tp(0, 17);

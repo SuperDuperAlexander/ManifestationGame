@@ -24,8 +24,8 @@ interface Plank {
 }
 
 /**
- * The bridge of light over the chasm. Every released blockade becomes one plank.
- * Planks appear one by one when the player is at the chasm.
+ * The bridge of light over the chasm. Every released blockade earns planks.
+ * Once all needed planks are earned, they appear one by one when the player comes to the chasm.
  * With `planksRequired` planks the bridge can be walked; a soft thread of light fills any gap.
  */
 export class LightBridge {
@@ -156,8 +156,10 @@ export class LightBridge {
 
   update(dt: number): void {
     this.time += dt;
-    // Bring pending planks in one after another while the player watches.
-    if (this.playerNear && this.placed < this.earned) {
+    // The bridge builds only once all its planks are earned, while the player is at the chasm.
+    // Then the planks come in one after another.
+    const ready = this.earned >= this.spec.planksRequired;
+    if (ready && this.playerNear && this.placed < this.earned) {
       const p = this.planks[this.placed]!;
       if (p.target === 0) {
         p.target = 1;

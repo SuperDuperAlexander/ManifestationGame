@@ -176,3 +176,12 @@ not push within 14 s, or finds breathing alone, she explains breathing anyway.
 **D39. The fairy shows the way.** When the player lingers for 14 s without getting closer to the next
 goal (next fog, then the bridge, then the gate), she flies a little way toward it: "This way. Follow the path."
 Settings: `TUNING.guide`.
+
+**D40. The bridge builds only when it is complete** (replaces D18 for this level): nothing appears
+until all needed planks are earned (both fogs). Then, when the player comes within 9 m of the bridge
+start (`TUNING.bridge.nearDistance`), the planks appear one after another.
+
+**D41. The mood follows the fog, not the progress** (replaces the start values of D35): the world is
+bright from the start. Near an active fog it grows darker and paler (from 16 m, full at 3 m); walking
+away brings the light back. A fog breathed thinner darkens less, so breathing brightens the world.
+Pushing still darkens further (D36). Each release adds a warm golden lift. Settings: `TUNING.mood`.
