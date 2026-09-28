@@ -13,6 +13,7 @@ import {
 import { resample } from './Ground';
 import { segDist, type Segment, type Walkability } from './Walkability';
 import type { CardInstance } from './PaperCard';
+import { Valley } from './Valley';
 
 /** One prop instance, placed in world metres. */
 export interface PlacedProp extends CardInstance {
@@ -38,6 +39,7 @@ export interface ResolvedZone {
 
 export interface ResolvedChapter {
   spec: ChapterSpec;
+  valley: Valley;
   zones: Map<string, ResolvedZone>;
   start: { zone: string; x: number; z: number };
 }
@@ -59,6 +61,7 @@ export async function loadChapter(url: string): Promise<ChapterSpec> {
 /** Places every prop, fog and hint in world space. Deterministic: same file, same world. */
 export function resolveChapter(spec: ChapterSpec): ResolvedChapter {
   const zones = new Map<string, ResolvedZone>();
+  const valley = new Valley(spec.terrain.valley, spec.terrain.chasms.map((c) => c.rect));
   // Lines that scattered props must keep clear of (paths, rivers), in world metres.
   const keepClear: Segment[] = [];
   for (const p of spec.terrain.paths) addPolyline(keepClear, p.points, 0, 0, p.width / 2 + 0.3);
@@ -79,6 +82,7 @@ export function resolveChapter(spec: ChapterSpec): ResolvedChapter {
     z.props.forEach((p, index) => {
       const meta = spec.assets[p.asset] ?? DEFAULT_META;
       const rnd = new Random(spec.seed ^ hashString(`${z.id}:${index}:${p.asset}`));
+      const py = p.pos?.length === 3 ? p.pos[1] : 0;
       const make = (x: number, zz: number): PlacedProp => {
         const c = TUNING.cards;
         const base = p.scale ?? meta.height;
@@ -92,6 +96,8 @@ export function resolveChapter(spec: ChapterSpec): ResolvedChapter {
           asset: p.asset,
           collide: p.collide !== false,
           x,
+          // Props on the hills stand on the slope.
+          y: valley.height(x, zz) + py,
           z: zz,
           height,
           rotY,
@@ -182,18 +188,15 @@ export function resolveChapter(spec: ChapterSpec): ResolvedChapter {
 
   const startZone = zones.get(spec.playerStart.zone)!;
   const [sx, sz] = xz(spec.playerStart.pos);
-  return { spec, zones, start: { zone: startZone.spec.id, x: startZone.ox + sx, z: startZone.oz + sz } };
+  return { spec, valley, zones, start: { zone: startZone.spec.id, x: startZone.ox + sx, z: startZone.oz + sz } };
 }
 
-/** Fills the walk map from the chapter: areas, paths, rivers, fords and prop colliders. */
+/** Fills the walk map from the chapter: valley floor, rivers, fords and prop colliders. */
 export function buildWalkability(ch: ResolvedChapter, walk: Walkability): void {
   const spec = ch.spec;
+  walk.floor = (x, z, r) => ch.valley.onFloor(x, z, r);
   for (const z of ch.zones.values()) {
-    for (const a of z.spec.areas) {
-      walk.areas.push({ minX: z.ox + a[0], minZ: z.oz + a[1], maxX: z.ox + a[2], maxZ: z.oz + a[3] });
-    }
     for (const g of z.ground) {
-      if (g.type === 'path' && g.walkable) addPolyline(walk.corridors, g.points, z.ox, z.oz, g.width / 2);
       if (g.type === 'water' && g.blocks !== false) addPolyline(walk.blockers, g.points, z.ox, z.oz, g.width / 2 - 0.4);
     }
     for (const [px, pz, r] of z.spec.passages) walk.passages.push({ x: z.ox + px, z: z.oz + pz, r });
@@ -209,9 +212,6 @@ export function buildWalkability(ch: ResolvedChapter, walk: Walkability): void {
         walk.colliders.push({ x: p.x, z: p.z, r: meta.collider * k });
       }
     }
-  }
-  for (const p of spec.terrain.paths) {
-    if (p.walkable !== false) addPolyline(walk.corridors, p.points, 0, 0, p.width / 2);
   }
   for (const w of spec.terrain.water) addPolyline(walk.blockers, w.points, 0, 0, w.width / 2 - 0.4);
   for (const [x, z, r] of spec.terrain.passages) walk.passages.push({ x, z, r });

@@ -7,13 +7,13 @@ import { Color4 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
 import '@babylonjs/core/Meshes/thinInstanceMesh';
 import { TUNING } from '../config/tuning';
-import type { AssetLoader, TextureKindOptions } from '../core/AssetLoader';
+import type { AssetLoader, LoadedImage, TextureKindOptions } from '../core/AssetLoader';
 import type { CameraRig } from '../core/CameraRig';
 import type { Events } from '../core/Events';
 import type { FogField } from '../gameplay/FogField';
 import { xz } from '../types/chapter';
-import { createPaperMaterial, curveDrop, type PaperMaterial } from '../shaders/paperShader';
-import type { ResolvedChapter, ResolvedZone } from './ChapterLoader';
+import { createPaperMaterial, type PaperMaterial } from '../shaders/paperShader';
+import type { PlacedProp, ResolvedChapter, ResolvedZone } from './ChapterLoader';
 import { createDisc, createGroundRect, createRibbon } from './Ground';
 import { PaperCardSet } from './PaperCard';
 import { procTexture } from './ProceduralTextures';
@@ -26,8 +26,10 @@ export interface Bounds {
   maxX: number;
   minZ: number;
   maxZ: number;
-  /** Tallest thing inside, metres. */
+  /** Highest point inside, metres above 0. */
   top: number;
+  /** Lowest point inside (default 0). */
+  bottom?: number;
 }
 
 /** Something that can be hidden when off screen. */
@@ -43,7 +45,8 @@ interface LoadedZone {
   root: TransformNode;
   container: AssetContainer;
   textures: { image: string; opts: TextureKindOptions }[];
-  cards: PaperCardSet[];
+  /** Prop images of this zone, by asset. The cards themselves are shared by all loaded zones. */
+  images: Map<string, LoadedImage>;
   fogIds: string[];
   parts: Part[];
   /** Seconds since the zone was last wanted. Unloaded after a grace time. */
@@ -56,10 +59,13 @@ interface LoadedZone {
  * Keeps the current zone and its neighbours loaded, and nothing else.
  * Neighbours load in the background before the player gets there.
  * Far zones are disposed. Each zone lives in its own AssetContainer.
- * Also hides loaded zones that are off screen (behind the bent horizon or to the side).
+ * Props of all loaded zones share one card set per image (one draw call per image),
+ * rebuilt when a zone comes or goes. Other parts of loaded zones are hidden when off screen.
  */
 export class ZoneStreamer {
   private readonly loaded = new Map<string, LoadedZone>();
+  private readonly sharedCards = new Map<string, PaperCardSet>();
+  private sharedShadows: Mesh | null = null;
   current = '';
   private timer = 0;
   private readonly corner = new Vector3();
@@ -147,11 +153,7 @@ export class ZoneStreamer {
     this.cull();
   }
 
-  /**
-   * Hides every part of the loaded zones that cannot be seen: off to the side, behind the camera,
-   * or sunk behind the bent horizon (its highest point projects below the horizon line
-   * and it starts beyond the point where the horizon forms). Cheap: 8 corners per part.
-   */
+  /** Hides every part of the loaded zones that is off screen. Cheap: 8 corners per part. */
   private cull(): void {
     const test = (b: Bounds): boolean => this.boundsVisible(b);
     for (const z of this.loaded.values()) {
@@ -166,35 +168,71 @@ export class ZoneStreamer {
     }
   }
 
-  /** True if a box (on the ground, `top` metres high) can be seen this frame. */
+  /** True if a box (from `bottom` to `top` metres high) can be seen this frame. */
   boundsVisible(b: Bounds): boolean {
     const cam = this.rig.camera;
     const vp = cam.getViewMatrix().multiply(cam.getProjectionMatrix());
-    const horizonNdc = 1 - 2 * this.rig.horizonFromTop;
-    const pivotZ = this.rig.target.z;
-    const camZ = cam.position.z;
-    {
-      if (b.maxZ < camZ - 2) return false;
-      let minX = Infinity;
-      let maxX = -Infinity;
-      let maxTopY = -Infinity;
-      let minY = Infinity;
-      for (const x of [b.minX, b.maxX]) {
-        for (const zz of [b.minZ, b.maxZ]) {
-          for (const y of [0, b.top]) {
-            this.corner.set(x, y - curveDrop(zz), zz);
-            const p = Vector3.TransformCoordinates(this.corner, vp);
-            minX = Math.min(minX, p.x);
-            maxX = Math.max(maxX, p.x);
-            minY = Math.min(minY, p.y);
-            if (y > 0) maxTopY = Math.max(maxTopY, p.y);
-          }
+    if (b.maxZ < cam.position.z - 2) return false;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const x of [b.minX, b.maxX]) {
+      for (const zz of [b.minZ, b.maxZ]) {
+        for (const y of [b.bottom ?? 0, b.top]) {
+          this.corner.set(x, y, zz);
+          const p = Vector3.TransformCoordinates(this.corner, vp);
+          minX = Math.min(minX, p.x);
+          maxX = Math.max(maxX, p.x);
+          minY = Math.min(minY, p.y);
+          maxY = Math.max(maxY, p.y);
         }
       }
-      if (maxX < -1.05 || minX > 1.05 || minY > 1.05) return false;
-      const pastHorizon = b.minZ - pivotZ > this.rig.horizonDz + 1 && maxTopY < horizonNdc - 0.005;
-      return !pastHorizon;
     }
+    return !(maxX < -1.05 || minX > 1.05 || minY > 1.05 || maxY < -1.05);
+  }
+
+  /**
+   * One card set per image for the props of all loaded zones, and one mesh for all their
+   * blob shadows (only on the flat floor). Called when a zone has loaded or is unloaded.
+   */
+  private rebuildShared(): void {
+    const byAsset = new Map<string, { img: LoadedImage; list: PlacedProp[] }>();
+    const shadows: PlacedProp[] = [];
+    for (const z of this.loaded.values()) {
+      if (z.state !== 'loaded') continue;
+      for (const p of this.chapter.zones.get(z.id)!.props) {
+        const img = z.images.get(p.asset);
+        if (!img) continue;
+        let entry = byAsset.get(p.asset);
+        if (!entry) byAsset.set(p.asset, (entry = { img, list: [] }));
+        entry.list.push(p);
+        if (p.shadow > 0 && (p.y ?? 0) < 0.05) shadows.push(p);
+      }
+    }
+    for (const set of this.sharedCards.values()) set.dispose();
+    this.sharedCards.clear();
+    for (const [asset, { img, list }] of byAsset) {
+      this.sharedCards.set(asset, new PaperCardSet(this.scene, asset, img, list, { shadows: false }));
+    }
+
+    this.sharedShadows?.material?.dispose();
+    this.sharedShadows?.dispose();
+    this.sharedShadows = null;
+    if (!shadows.length) return;
+    const sh = MeshBuilder.CreateGround('shadows', { width: 1, height: 1 }, this.scene);
+    sh.material = createPaperMaterial('shadowMat', this.scene, { texture: procTexture(this.scene, 'shadow'), alphaBlend: true });
+    sh.alphaIndex = GROUND_OVERLAY_ALPHA_INDEX + 2;
+    sh.isPickable = false;
+    const m = new Matrix();
+    const buf = new Float32Array(shadows.length * 16);
+    shadows.forEach((p, i) => {
+      Matrix.ComposeToRef(new Vector3(p.shadow, 1, p.shadow * 0.55), Quaternion.Identity(), new Vector3(p.x, 0.035, p.z + 0.1), m);
+      m.copyToArray(buf, i * 16);
+    });
+    sh.thinInstanceSetBuffer('matrix', buf, 16, true);
+    sh.thinInstanceRefreshBoundingInfo(false);
+    this.sharedShadows = sh;
   }
 
   private async load(id: string): Promise<void> {
@@ -208,7 +246,7 @@ export class ZoneStreamer {
       root,
       container: new AssetContainer(this.scene),
       textures: [],
-      cards: [],
+      images: new Map(),
       fogIds: [],
       parts: [],
       unwanted: 0,
@@ -225,6 +263,7 @@ export class ZoneStreamer {
     entry.state = 'loaded';
     entry.visible = true;
     root.setEnabled(true);
+    this.rebuildShared();
     this.events.emit('zoneLoaded', { id });
   }
 
@@ -234,7 +273,7 @@ export class ZoneStreamer {
     this.loaded.delete(id);
     z.cancelled = true;
     for (const fid of z.fogIds) this.fogs.remove(fid);
-    for (const c of z.cards) c.dispose();
+    if (z.state === 'loaded') this.rebuildShared();
     z.container.dispose();
     z.root.dispose();
     for (const t of z.textures) this.assets.release(t.image, t.opts);
@@ -309,42 +348,10 @@ export class ZoneStreamer {
       }
     }
 
-    // Props: one thin-instanced card set per image.
-    const byAsset = new Map<string, typeof zone.props>();
-    for (const p of zone.props) {
-      const list = byAsset.get(p.asset) ?? [];
-      list.push(p);
-      byAsset.set(p.asset, list);
-    }
-    const images = await Promise.all(
-      [...byAsset.keys()].map(async (asset) => [asset, await this.texture(entry, asset)] as const),
-    );
-    for (const [asset, img] of images) {
-      const list = byAsset.get(asset)!;
-      const set = new PaperCardSet(scene, `${id}:${asset}`, img, list, { shadows: false });
-      set.mesh.parent = entry.root;
-      entry.cards.push(set);
-      this.addPart(entry, boundsOf(list, set.aspect), (v) => set.mesh.setEnabled(v));
-    }
-
-    // All blob shadows of the zone in one draw call.
-    const shadows = zone.props.filter((p) => p.shadow > 0);
-    if (shadows.length) {
-      const sh = MeshBuilder.CreateGround(`${id}:shadows`, { width: 1, height: 1 }, scene);
-      const mat = createPaperMaterial(`${id}:shadowMat`, scene, { texture: procTexture(scene, 'shadow'), alphaBlend: true });
-      sh.material = mat;
-      sh.alphaIndex = GROUND_OVERLAY_ALPHA_INDEX + 2;
-      sh.isPickable = false;
-      sh.alwaysSelectAsActiveMesh = true;
-      const m = new Matrix();
-      const buf = new Float32Array(shadows.length * 16);
-      shadows.forEach((p, i) => {
-        Matrix.ComposeToRef(new Vector3(p.shadow, 1, p.shadow * 0.55), Quaternion.Identity(), new Vector3(p.x, 0.035, p.z + 0.1), m);
-        m.copyToArray(buf, i * 16);
-      });
-      sh.thinInstanceSetBuffer('matrix', buf, 16, true);
-      this.adopt(entry, sh, mat, boundsOf(shadows, 1.2, 0.2));
-    }
+    // Prop images. The cards are built for all loaded zones together (rebuildShared).
+    const assets = [...new Set(zone.props.map((p) => p.asset))];
+    const images = await Promise.all(assets.map(async (asset) => [asset, await this.texture(entry, asset)] as const));
+    for (const [asset, img] of images) entry.images.set(asset, img);
 
     // Hidden paths: small marks of light that only show inside the player's light.
     const marks = zone.hiddenPaths.flat();
@@ -411,21 +418,3 @@ export class ZoneStreamer {
   }
 }
 
-/** Box around card instances: width from the image shape, height from the tallest card. */
-function boundsOf(list: { x: number; z: number; height: number }[], aspect: number, top?: number): Bounds {
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minZ = Infinity;
-  let maxZ = -Infinity;
-  let h = 0;
-  for (const p of list) {
-    const w = (p.height * aspect) / 2 + 0.5;
-    minX = Math.min(minX, p.x - w);
-    maxX = Math.max(maxX, p.x + w);
-    minZ = Math.min(minZ, p.z - 1);
-    // Cards lean back, so their tops reach further north.
-    maxZ = Math.max(maxZ, p.z + p.height * 0.6 + 1);
-    h = Math.max(h, p.height);
-  }
-  return { minX, maxX, minZ, maxZ, top: top ?? h };
-}

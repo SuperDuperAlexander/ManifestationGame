@@ -5,7 +5,6 @@ import type { BaseTexture } from '@babylonjs/core/Materials/Textures/baseTexture
 import type { Scene } from '@babylonjs/core/scene';
 import '@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/instancesVertex';
-import { TUNING } from '../config/tuning';
 import { WORLD_UNIFORMS } from './paperShader';
 
 /**
@@ -19,7 +18,6 @@ attribute vec3 position;
 attribute vec2 uv;
 #include<instancesDeclaration>
 uniform mat4 viewProjection;
-uniform vec4 uCurve;
 uniform vec4 uFog; // x: time, y: wobble, z: surge, w: seed
 varying vec2 vUv;
 varying vec3 vWorld;
@@ -39,8 +37,6 @@ void main(void) {
   wp.y += sin(t * 0.37 + phase * 1.7) * 0.08 + cos(t * 13.0 + phase) * uFog.y * 0.12;
   // Grow a little when surging.
   wp.xyz = origin + (wp.xyz - origin) * (1.0 + uFog.z * 0.18);
-  float d = max(wp.z - uCurve.x - uCurve.y, 0.0);
-  wp.y -= uCurve.z * d * d;
   vUv = uv;
   vWorld = wp.xyz;
 #ifdef INSTANCESCOLOR
@@ -104,7 +100,7 @@ export function createFogMaterial(name: string, scene: Scene, texture: BaseTextu
     { vertex: 'fog', fragment: 'fog' },
     {
       attributes: ['position', 'uv'],
-      uniforms: ['world', 'viewProjection', 'uCurve', 'uFog', 'uFade'],
+      uniforms: ['world', 'viewProjection', 'uFog', 'uFade'],
       samplers: ['uTex'],
       needAlphaBlending: true,
     },
@@ -118,7 +114,6 @@ export function createFogMaterial(name: string, scene: Scene, texture: BaseTextu
     const effect = mat.getEffect();
     if (!effect) return;
     const f = mat.fog;
-    effect.setFloat4('uCurve', WORLD_UNIFORMS.pivotZ, TUNING.curve.flatDistance, TUNING.curve.strength, 0);
     effect.setFloat4('uFog', WORLD_UNIFORMS.time + f.seed, f.wobble, f.surge, f.seed);
     effect.setFloat4('uFade', f.density, f.alpha, f.gold, 0);
   });

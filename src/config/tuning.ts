@@ -4,45 +4,42 @@
  */
 export const TUNING = {
   camera: {
-    /** Angle from above, in degrees. CLAUDE.md asks for 35–45. */
-    pitchDeg: 36,
+    /** Angle from above, in degrees. Low enough that the sky shows above the valley ridge. */
+    pitchDeg: 22,
     /** Distance from the look-at point to the camera. */
-    distance: 18,
+    distance: 16,
     /** Vertical field of view on landscape screens. */
-    fov: 0.72,
+    fov: 0.8,
     /** Vertical field of view on portrait screens (phones held upright). */
-    fovPortrait: 1.0,
+    fovPortrait: 1.1,
     /** The camera looks at a point this far ahead of the player (north). */
     lookAhead: 2.5,
     /** Height of the look-at point above the ground. */
     lookHeight: 1.0,
     /** How fast the camera catches up. Higher = snappier. */
     followSharpness: 3.2,
-    maxZ: 160,
-    /** 0 = normal perspective, 1 = vertical lines stay fully vertical on screen. */
-    verticalCorrection: 0,
+    maxZ: 180,
   },
 
-  /**
-   * World curvature. The ground bends down beyond a distance ahead of the camera,
-   * so the horizon and the painted backdrop become visible from a steep camera.
-   */
-  curve: {
-    /** Flat zone in front of the look-at point. Nothing bends inside it. */
-    flatDistance: 5.5,
-    /** Drop = strength * (distance beyond the flat zone)^2. */
-    strength: 0.028,
-    /** Haze on the world near the horizon: 0 = none. */
-    hazeAmount: 0.5,
-    /** Haze starts this far beyond the flat zone ... */
-    hazeStart: 3,
-    /** ... and is full this far beyond it. */
-    hazeEnd: 17,
+  /** Far things fade softly toward the haze colour (metres north of the camera's look-at point). */
+  haze: {
+    amount: 0.4,
+    start: 14,
+    end: 48,
+  },
+
+  /** Finding the valley ridge on screen, so the painted backdrop sits right behind it. */
+  ridge: {
+    /** Screen columns checked, in -1..1 (left..right). */
+    columns: [-0.95, -0.5, 0, 0.5, 0.95],
+    /** Metres north of the look-at point that are checked, and the step. */
+    reach: 90,
+    step: 0.75,
   },
 
   backdrop: {
-    /** Distance of the backdrop planes from the camera. Only affects nothing but depth range. */
-    distance: 120,
+    /** Distance of the backdrop planes from the camera. Only affects the depth range. */
+    distance: 150,
     /**
      * Horizontal parallax: how many screen widths a layer shifts per metre the camera moves,
      * multiplied by (1 - layer parallax factor).
@@ -50,8 +47,6 @@ export const TUNING = {
     shiftPerMetre: 0.0025,
     /** Extra width of each layer, as a share of the screen width, so shifting never shows an edge. */
     overscan: 0.35,
-    /** Mountain layers: how far their image bottom sits below the horizon line, in screen heights. */
-    sinkBelowHorizon: 0.06,
   },
 
   player: {
@@ -66,7 +61,7 @@ export const TUNING = {
 
   cards: {
     /** Paper cards lean back by this angle so they face the camera a bit more. Degrees. */
-    leanBackDeg: 32,
+    leanBackDeg: 16,
     alphaCutoff: 0.5,
     /** Free variation per prop instance. */
     scaleJitter: 0.15,
@@ -74,6 +69,8 @@ export const TUNING = {
     warmthJitter: 0.04,
     /** Y rotation jitter in degrees. */
     rotationJitterDeg: 6,
+    /** Cards that hide the player get a soft see-through hole this wide (metres, at the player). */
+    seeThroughRadius: 1.9,
   },
 
   ground: {
@@ -82,6 +79,8 @@ export const TUNING = {
     pathTile: 5,
     stoneTile: 5,
     waterTile: 6,
+    /** How strongly slopes are shaded (light from the right). 0 = not at all. */
+    slopeShade: 0.9,
     /** Soft painted edge width of path and plaza overlays, in metres. */
     edgeSoftness: 1.2,
     waterFlowSpeed: 0.12,

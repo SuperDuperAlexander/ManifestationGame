@@ -12,7 +12,7 @@ import type { Events } from '../core/Events';
 import type { Sound } from '../core/Sound';
 import { clamp01, smoothstep } from '../core/Random';
 import type { BridgeSpec } from '../types/chapter';
-import { createPaperMaterial, curveDrop } from '../shaders/paperShader';
+import { createPaperMaterial } from '../shaders/paperShader';
 import { procTexture } from '../world/ProceduralTextures';
 import type { Segment, Walkability } from '../world/Walkability';
 
@@ -127,7 +127,7 @@ export class LightBridge {
       const t = Math.random() * (this.placed / this.planks.length);
       const x = ax + (bx - ax) * t + (Math.random() - 0.5) * this.width;
       const z = az + (bz - az) * t;
-      pos.set(x, 0.05 - curveDrop(z), z);
+      pos.set(x, 0.05, z);
     };
     ps.start();
     this.sparkle = ps;

@@ -4,7 +4,6 @@ import { TUNING } from '../config/tuning';
 import type { Events } from '../core/Events';
 import type { BreathSystem } from '../player/BreathSystem';
 import type { PlayerController } from '../player/PlayerController';
-import { curveDrop } from '../shaders/paperShader';
 import type { Walkability } from '../world/Walkability';
 import { FogBlockade, type FogBlockadeData } from './FogBlockade';
 
@@ -110,7 +109,7 @@ export class FogField {
     this.hasTarget = false;
     if (nearest && nearestD < TUNING.breath.reach) {
       const s = nearest.data.size ?? 1;
-      this.streamTarget.set(nearest.position.x, 1.2 * s - curveDrop(nearest.position.z), nearest.position.z);
+      this.streamTarget.set(nearest.position.x, 1.2 * s, nearest.position.z);
       this.hasTarget = true;
       if (breath.lightThisFrame > 0) {
         // Full strength up close, gently less at the edge of reach.

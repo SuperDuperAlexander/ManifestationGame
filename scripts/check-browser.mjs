@@ -18,6 +18,8 @@ mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch({
   headless: !args.includes('--headed'),
+  // Optional: a Chromium that is already installed (when Playwright's own download is missing).
+  executablePath: process.env.CHROMIUM_PATH || undefined,
   args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'],
 });
 const context = await browser.newContext(

@@ -11,15 +11,13 @@ import { PALETTE, color4 } from '../config/palette';
 
 /**
  * The one shared, unlit "paper" shader. Light and shade are painted into the textures,
- * so the shader only samples, tints and hazes. It also bends the world down beyond a
- * flat zone in front of the camera (see TUNING.curve), which makes the horizon visible.
- *
- * Every world material uses it, so the bend is the same for all of them.
+ * so the shader only samples, tints and hazes. Far things fade softly toward the haze colour
+ * (see TUNING.haze). The valley hills carry their painted shade as a vertex value.
  */
 
 /** Values shared by all paper materials. Updated once per frame by the game. */
 export const WORLD_UNIFORMS = {
-  /** Z of the camera's look-at point. The flat zone starts here. */
+  /** Z of the camera's look-at point. Haze grows with the distance north of it. */
   pivotZ: 0,
   time: 0,
   /** Player position and light radius, for hidden paths that only show in the light. */
@@ -27,13 +25,10 @@ export const WORLD_UNIFORMS = {
   revealZ: 0,
   revealRadius: 0,
   hazeColor: color4(PALETTE.ivory),
+  /** Paper cards between the camera and this point (the player) turn see-through there. */
+  see: [0, 0, 0] as [number, number, number],
+  camera: [0, 0, 0] as [number, number, number],
 };
-
-/** Metres the world drops at a world z. Same formula as the vertex shader. */
-export function curveDrop(z: number): number {
-  const d = Math.max(z - WORLD_UNIFORMS.pivotZ - TUNING.curve.flatDistance, 0);
-  return TUNING.curve.strength * d * d;
-}
 
 const VERTEX = /* glsl */ `
 precision highp float;
@@ -41,7 +36,6 @@ attribute vec3 position;
 attribute vec2 uv;
 #include<instancesDeclaration>
 uniform mat4 viewProjection;
-uniform vec4 uCurve;
 uniform vec4 uHazeCfg;
 uniform vec4 uUv;
 varying vec2 vUv;
@@ -51,13 +45,17 @@ varying float vHaze;
 #ifdef INSTANCESCOLOR
 varying vec4 vTint;
 #endif
+#ifdef VSHADE
+attribute float shade;
+varying float vShade;
+#endif
 void main(void) {
 #include<instancesVertex>
   vec4 wp = finalWorld * vec4(position, 1.0);
-  float dz = wp.z - uCurve.x - uCurve.y;
-  float d = max(dz, 0.0);
-  wp.y -= uCurve.z * d * d;
-  vHaze = uHazeCfg.x * smoothstep(uHazeCfg.y, uHazeCfg.z, dz);
+  vHaze = uHazeCfg.x * smoothstep(uHazeCfg.y, uHazeCfg.z, wp.z - uHazeCfg.w);
+#ifdef VSHADE
+  vShade = shade;
+#endif
 #ifdef WORLDUV
   vUv = wp.xz * uUv.xy + uUv.zw;
 #else
@@ -83,12 +81,17 @@ uniform vec4 uUv;
 uniform float uAlphaCut;
 uniform float uTime;
 uniform vec4 uLayer;
+uniform vec4 uSee;
+uniform vec4 uCamPos;
 varying vec2 vUv;
 varying vec2 vLocal;
 varying vec3 vWorld;
 varying float vHaze;
 #ifdef INSTANCESCOLOR
 varying vec4 vTint;
+#endif
+#ifdef VSHADE
+varying float vShade;
 #endif
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -110,6 +113,9 @@ void main(void) {
   vec4 c = texture2D(uTex, vUv);
 #endif
   c *= uColor;
+#ifdef VSHADE
+  c.rgb *= vShade;
+#endif
 #ifdef INSTANCESCOLOR
   c.rgb *= vTint.rgb;
   c.a *= vTint.a;
@@ -132,6 +138,20 @@ void main(void) {
 #ifdef ALPHATEST
   if (c.a < uAlphaCut) discard;
   c.a = 1.0;
+#endif
+#ifdef SEETHROUGH
+  // A soft hole around the line from the camera to the player, only in front of the player.
+  vec3 toP = uSee.xyz - uCamPos.xyz;
+  float len = length(toP);
+  vec3 dir = toP / len;
+  vec3 rel = vWorld - uCamPos.xyz;
+  float t = dot(rel, dir) / len;
+  if (t > 0.0 && t < 0.93) {
+    float r = uSee.w * (0.3 + 0.7 * t);
+    float keep = smoothstep(r * 0.5, r, length(rel - dir * t * len));
+    float dither = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    if (keep < dither) discard;
+  }
 #endif
   c.rgb = mix(c.rgb, uHazeColor.rgb, vHaze);
 #ifdef LAYERHAZE
@@ -170,8 +190,10 @@ export interface PaperMaterialOptions {
   layerHaze?: boolean;
   /** Set false for things in the sky or backdrop. */
   haze?: boolean;
-  /** Set false for things that must not bend (none in the world). */
-  curve?: boolean;
+  /** The mesh carries a painted shade value per vertex (attribute "shade"). */
+  vertexShade?: boolean;
+  /** Cut a soft hole where the card hides the player. */
+  seeThrough?: boolean;
   depthWrite?: boolean;
   backFaceCulling?: boolean;
 }
@@ -187,6 +209,8 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
   if (opts.water) defines.push('WATER');
   if (opts.reveal) defines.push('REVEAL');
   if (opts.layerHaze) defines.push('LAYERHAZE');
+  if (opts.vertexShade) defines.push('VSHADE');
+  if (opts.seeThrough) defines.push('SEETHROUGH');
 
   const blend = !!(opts.alphaBlend || opts.additive);
   const mat = new ShaderMaterial(
@@ -194,11 +218,10 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
     scene,
     { vertex: 'paper', fragment: 'paper' },
     {
-      attributes: ['position', 'uv'],
+      attributes: opts.vertexShade ? ['position', 'uv', 'shade'] : ['position', 'uv'],
       uniforms: [
         'world',
         'viewProjection',
-        'uCurve',
         'uHazeCfg',
         'uUv',
         'uColor',
@@ -208,6 +231,8 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
         'uAlphaCut',
         'uTime',
         'uLayer',
+        'uSee',
+        'uCamPos',
       ],
       samplers: ['uTex'],
       defines,
@@ -232,17 +257,20 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
     : [opts.radialEdge ?? 0.2, 0, 0, 0];
   mat.setArray4('uEdge', edge);
 
-  const useCurve = opts.curve ?? true;
   const useHaze = opts.haze ?? true;
   mat.onBindObservable.add(() => {
     const effect = mat.getEffect();
     if (!effect) return;
     const u = WORLD_UNIFORMS;
-    effect.setFloat4('uCurve', u.pivotZ, TUNING.curve.flatDistance, useCurve ? TUNING.curve.strength : 0, 0);
-    effect.setFloat4('uHazeCfg', useHaze ? TUNING.curve.hazeAmount : 0, TUNING.curve.hazeStart, TUNING.curve.hazeEnd, 0);
+    const h = TUNING.haze;
+    effect.setFloat4('uHazeCfg', useHaze ? h.amount : 0, h.start, h.end, u.pivotZ);
     effect.setDirectColor4('uHazeColor', u.hazeColor);
     effect.setFloat4('uReveal', u.revealX, u.revealZ, u.revealRadius, 0);
     effect.setFloat('uTime', u.time);
+    if (opts.seeThrough) {
+      effect.setFloat4('uSee', u.see[0], u.see[1], u.see[2], TUNING.cards.seeThroughRadius);
+      effect.setFloat4('uCamPos', u.camera[0], u.camera[1], u.camera[2], 0);
+    }
   });
   return mat;
 }
