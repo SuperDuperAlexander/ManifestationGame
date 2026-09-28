@@ -118,8 +118,8 @@ export const TUNING = {
     maxDensity: 1.25,
     /** The fog is soft but you cannot walk through it. */
     colliderRadius: 1.9,
-    /** Walking into it counts as a push when closer than this. */
-    pushDistance: 2.5,
+    /** Walking into it counts as a push when the body is closer than this to its edge. */
+    pushDistance: 0.75,
     /** Pressing E counts as a push when closer than this. */
     strikeDistance: 4.5,
     pushCooldown: 1.2,

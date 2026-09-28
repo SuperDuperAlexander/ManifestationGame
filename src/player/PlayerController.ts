@@ -11,6 +11,8 @@ import type { Walkability } from '../world/Walkability';
 export class PlayerController {
   readonly position = new Vector3();
   readonly velocity = new Vector3();
+  /** Where the player wants to walk (input direction, length 0..1). */
+  readonly intent = new Vector3();
   heading = 0;
   /** Scales the walk speed (1 = normal). Breathing slows the walk a little. */
   speedFactor = 1;
@@ -43,6 +45,7 @@ export class PlayerController {
     const tx = ix * max;
     const tz = iz * max;
     const wants = ix !== 0 || iz !== 0;
+    this.intent.set(ix, 0, iz);
     const k = damp(wants ? t.acceleration : t.deceleration, dt);
     this.velocity.x += (tx - this.velocity.x) * k;
     this.velocity.z += (tz - this.velocity.z) * k;

@@ -1,0 +1,45 @@
+{
+  "intro": [
+    "Hello, little light. I'll walk this path with you.",
+    "This valley is full of fog. Some of it lives inside us.",
+    "Walk with me. The clearing is just ahead."
+  ],
+  "controlsMove": "Use W A S D or the arrow keys to walk.",
+  "controlsMoveTouch": "Drag on the left side to walk.",
+  "firstBlockade": [
+    "Look. This fog carries a heavy thought.",
+    "Force doesn't help here. Breathe."
+  ],
+  "breathingTip": "Breathe in… let your light grow. Breathe out… let it flow.",
+  "breathingKeys": "Hold Space to breathe in. Hold Shift to breathe out.",
+  "breathingKeysTouch": "Hold the light button to breathe in. Let go to breathe out.",
+  "force": "Force doesn't help here. Breathe.",
+  "released": [
+    "There it goes. Light again.",
+    "Softly. That is how it works.",
+    "You were never that thought.",
+    "It was only fog.",
+    "Lighter now, isn't it?",
+    "One more fog became light."
+  ],
+  "hint": "Something is waiting over there.",
+  "hintWell": "The old well remembers every wish. Rest here a moment.",
+  "hintOak": "This oak has seen many travellers. It saw them find their way.",
+  "hintForest": "Two fogs live in this forest. Take your time.",
+  "hintRuins": "Old stones, old fears. Breathe slowly here.",
+  "hintRiver": "Listen to the water. It never forces its way.",
+  "hintHiddenPath": "Breathe in while you walk. Your light shows hidden paths.",
+  "hintMonolith": "The rune glows for those who breathe.",
+  "hintChasmEarly": "A bridge of light could cross here. Every fog you release becomes a plank.",
+  "hintChasm": "Something is waiting over there.",
+  "bridge": "Every fog you released became light. Look.",
+  "bridgeMore": "Almost. The bridge needs a little more light.",
+  "bridgeReady": "The bridge is ready. Walk across. I'm with you.",
+  "gateOpen": "The gate is open. Walk through when you are ready.",
+  "chapterEnd": "You carried your light through the fog.",
+  "chapterEndTitle": "Chapter complete",
+  "chapterEndSubtitle": "The Awakening",
+  "chapterEndNext": "More of the valley awaits.",
+  "wakeUp": "…",
+  "startPrompt": "Press any key or tap to begin"
+}

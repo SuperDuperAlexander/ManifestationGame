@@ -2,6 +2,7 @@ import { Engine } from '@babylonjs/core/Engines/engine';
 import { Scene } from '@babylonjs/core/scene';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
 import { PALETTE, color4 } from '../config/palette';
+import { TUNING } from '../config/tuning';
 import { InputManager } from './InputManager';
 import { CameraRig } from './CameraRig';
 import { AssetLoader } from './AssetLoader';
@@ -14,6 +15,11 @@ import { buildGreybox } from '../world/Greybox';
 import { BreathSystem } from '../player/BreathSystem';
 import { BreathVisuals } from '../player/BreathVisuals';
 import { BreathGuide } from '../ui/BreathGuide';
+import { Events } from './Events';
+import { FogField } from '../gameplay/FogField';
+import { LightPoints } from '../gameplay/LightPoints';
+import { DialogueSystem } from '../companion/DialogueSystem';
+import { Hud } from '../ui/Hud';
 
 /**
  * Owns the engine, the scene and every system. One frame = one call to `frame()`.
@@ -31,6 +37,11 @@ export class Game {
   readonly breath = new BreathSystem();
   readonly breathVisuals: BreathVisuals;
   readonly breathGuide: BreathGuide;
+  readonly events = new Events();
+  readonly fogs: FogField;
+  readonly lightPoints: LightPoints;
+  readonly dialogue: DialogueSystem;
+  readonly hud: Hud;
   /** True on touch devices: letting go of the breath button breathes out. */
   touchMode = false;
   private time = 0;
@@ -59,6 +70,11 @@ export class Game {
     this.debug = new DebugOverlay(this.scene, ui);
     this.breathVisuals = new BreathVisuals(this.scene);
     this.breathGuide = new BreathGuide(ui);
+    this.fogs = new FogField(this.scene, this.walk, this.events);
+    this.lightPoints = new LightPoints(this.events);
+    this.hud = new Hud(ui, this.events);
+    this.dialogue = new DialogueSystem(ui, this.events);
+    this.events.on('fogPushed', () => void this.dialogue.say('force', { interrupt: true }));
     this.input.attach();
 
     window.addEventListener('resize', () => {
@@ -68,7 +84,12 @@ export class Game {
   }
 
   async start(): Promise<void> {
-    await buildGreybox(this.scene, this.assets, this.walk);
+    await Promise.all([
+      document.fonts.load('400 64px "Work Sans"'),
+      document.fonts.load('700 64px "Work Sans"'),
+      this.dialogue.load('./data/dialogue/en.json'),
+    ]);
+    await buildGreybox(this.scene, this.assets, this.walk, this.fogs);
     this.player.teleport(0, 0);
     this.rig.snapTo(this.player.position);
     this.engine.runRenderLoop(() => this.frame());
@@ -89,7 +110,10 @@ export class Game {
     // Breathing slows the walk: a calm pace to go with the breath.
     this.player.speedFactor = this.breath.state === 'idle' ? 1 : 0.7;
     this.player.update(dt);
+    this.fogs.update(dt, this.player, this.breath, this.input.pushPressed);
+    this.breathVisuals.target = this.fogs.hasTarget ? this.fogs.streamTarget : null;
     this.breathVisuals.update(dt, this.breath, this.player.position);
+    this.breathGuide.wanted = this.fogs.nearestDistance < TUNING.breath.reach + 2;
     WORLD_UNIFORMS.revealX = this.player.position.x;
     WORLD_UNIFORMS.revealZ = this.player.position.z;
     WORLD_UNIFORMS.revealRadius = this.breath.lightRadius;
@@ -104,6 +128,8 @@ export class Game {
       awake: 1,
     });
     this.breathGuide.update(dt, this.breath);
+    this.dialogue.update(dt);
+    this.hud.update(dt);
     this.rig.update(dt, this.player.position);
 
     this.debug.extra = {
@@ -112,6 +138,8 @@ export class Game {
       breath: `${this.breath.state} ${this.breath.breathLevel.toFixed(2)}`,
       rhythm: this.breath.rhythmScore.toFixed(2),
       breaths: this.breath.breaths,
+      light: this.lightPoints.total,
+      fog: this.fogs.nearest ? `${this.fogs.nearest.id} d=${this.fogs.nearest.density.toFixed(2)}` : '-',
     };
     this.debug.update(dt);
     this.scene.render();
