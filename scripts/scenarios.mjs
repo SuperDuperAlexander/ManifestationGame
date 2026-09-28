@@ -10,7 +10,51 @@ export default function scenarios({ wait, shot, hold, page }) {
       await page.keyboard.up('ShiftLeft');
     }
   };
+  const tp = async (x, z) => {
+    await page.evaluate(([x, z]) => {
+      const g = window.__lw.game;
+      g.player.teleport(x, z);
+      g.rig.snapTo(g.player.position);
+    }, [x, z]);
+    await wait(1800);
+  };
   return {
+    async meshes() {
+      await tp(0, 8);
+      const names = await page.evaluate(() => window.__lw.game.scene.getActiveMeshes().data.slice(0, window.__lw.game.scene.getActiveMeshes().length).map((m) => m.name));
+      const groups = {};
+      for (const n of names) {
+        const k = n.split(':')[0] + (n.includes(':') ? ':' + n.split(':')[1] : '');
+        groups[k] = (groups[k] || 0) + 1;
+      }
+      console.log(JSON.stringify(groups, null, 0));
+      const st = await page.evaluate(() => window.__lw.stats());
+      console.log('draw', st.drawCalls, 'active', st.activeMeshes);
+    },
+    async tour() {
+      const spots = [
+        ['t1-meadow', -51, -3],
+        ['t2-meadow-east', -38, 0],
+        ['t3-clearing', 0, -6],
+        ['t4-clearing-north', 0, 8],
+        ['t5-avenue', 0.5, 26],
+        ['t6-forest', -40, 38],
+        ['t7-forest-center', -44, 44],
+        ['t8-ruins', 0, 42],
+        ['t9-ruins-center', 0, 50],
+        ['t10-river', 36, 40],
+        ['t11-river-ford', 44, 46],
+        ['t12-chasm-path', 40, -3],
+        ['t13-chasm', 80, 0],
+        ['t14-chasm-edge', 80, 6],
+      ];
+      for (const [name, x, z] of spots) {
+        await tp(x, z);
+        await shot(name);
+        const st = await page.evaluate(() => window.__lw.stats());
+        console.log(name, 'draw', st.drawCalls, 'fps', st.fps, 'zones', st.loadedZones.join(','));
+      }
+    },
     async closeup() {
       const clip = { x: 490, y: 300, width: 300, height: 260 };
       await page.screenshot({ path: `${process.argv[process.argv.indexOf('--out') + 1]}/c1-idle.png`, clip });

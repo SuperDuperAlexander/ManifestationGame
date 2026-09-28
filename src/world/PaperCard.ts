@@ -34,7 +34,7 @@ export class PaperCardSet {
   readonly material: PaperMaterial;
   readonly aspect: number;
 
-  constructor(scene: Scene, name: string, image: LoadedImage, instances: CardInstance[]) {
+  constructor(scene: Scene, name: string, image: LoadedImage, instances: CardInstance[], opts: { shadows?: boolean } = {}) {
     this.aspect = image.width / image.height;
     this.mesh = MeshBuilder.CreatePlane(`card:${name}`, { width: this.aspect, height: 1 }, scene);
     this.mesh.bakeTransformIntoVertices(Matrix.Translation(0, 0.5, 0));
@@ -67,7 +67,7 @@ export class PaperCardSet {
     this.mesh.thinInstanceSetBuffer('matrix', matrices, 16, true);
     this.mesh.thinInstanceSetBuffer('color', colors, 4, true);
 
-    const withShadow = sorted.filter((s) => s.shadow > 0);
+    const withShadow = opts.shadows === false ? [] : sorted.filter((s) => s.shadow > 0);
     if (withShadow.length) {
       const sh = MeshBuilder.CreateGround(`cardShadow:${name}`, { width: 1, height: 1 }, scene);
       sh.material = createPaperMaterial(`cardShadowMat:${name}`, scene, {

@@ -5,7 +5,7 @@
 export const TUNING = {
   camera: {
     /** Angle from above, in degrees. CLAUDE.md asks for 35–45. */
-    pitchDeg: 38,
+    pitchDeg: 36,
     /** Distance from the look-at point to the camera. */
     distance: 18,
     /** Vertical field of view on landscape screens. */
@@ -29,15 +29,15 @@ export const TUNING = {
    */
   curve: {
     /** Flat zone in front of the look-at point. Nothing bends inside it. */
-    flatDistance: 7,
+    flatDistance: 5.5,
     /** Drop = strength * (distance beyond the flat zone)^2. */
-    strength: 0.02,
+    strength: 0.028,
     /** Haze on the world near the horizon: 0 = none. */
-    hazeAmount: 0.42,
+    hazeAmount: 0.5,
     /** Haze starts this far beyond the flat zone ... */
-    hazeStart: 4,
+    hazeStart: 3,
     /** ... and is full this far beyond it. */
-    hazeEnd: 22,
+    hazeEnd: 17,
   },
 
   backdrop: {
@@ -47,9 +47,9 @@ export const TUNING = {
      * Horizontal parallax: how many screen widths a layer shifts per metre the camera moves,
      * multiplied by (1 - layer parallax factor).
      */
-    shiftPerMetre: 0.006,
+    shiftPerMetre: 0.0025,
     /** Extra width of each layer, as a share of the screen width, so shifting never shows an edge. */
-    overscan: 0.7,
+    overscan: 0.35,
     /** Mountain layers: how far their image bottom sits below the horizon line, in screen heights. */
     sinkBelowHorizon: 0.06,
   },

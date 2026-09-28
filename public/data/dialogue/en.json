@@ -23,11 +23,13 @@
     "One more fog became light."
   ],
   "hint": "Something is waiting over there.",
+  "hintStart": "Look, the path opens to the clearing.",
   "hintWell": "The old well remembers every wish. Rest here a moment.",
   "hintOak": "This oak has seen many travellers. It saw them find their way.",
   "hintForest": "Two fogs live in this forest. Take your time.",
   "hintRuins": "Old stones, old fears. Breathe slowly here.",
   "hintRiver": "Listen to the water. It never forces its way.",
+  "hintFord": "The stones will carry you across.",
   "hintHiddenPath": "Breathe in while you walk. Your light shows hidden paths.",
   "hintMonolith": "The rune glows for those who breathe.",
   "hintChasmEarly": "A bridge of light could cross here. Every fog you release becomes a plank.",

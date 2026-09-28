@@ -1,11 +1,12 @@
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
-import type { Mesh } from '@babylonjs/core/Meshes/mesh';
+import { Mesh } from '@babylonjs/core/Meshes/mesh';
+import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
 import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { Color4 } from '@babylonjs/core/Maths/math.color';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Constants } from '@babylonjs/core/Engines/constants';
 import type { Scene } from '@babylonjs/core/scene';
-import { PALETTE, SHADES, color3 } from '../config/palette';
+import { PALETTE, SHADES } from '../config/palette';
 import { createToonMaterial, type ToonMaterial } from '../shaders/toonShader';
 import { createPaperMaterial, setPaperColor, type PaperMaterial } from '../shaders/paperShader';
 import { procTexture } from '../world/ProceduralTextures';
@@ -64,13 +65,11 @@ export class PlayerVisual implements IPlayerVisual {
     this.body.parent = this.root;
     this.root.scaling.setAll(TUNING.player.visualScale);
 
-    const cloakMat = this.toon('cloak', PALETTE.cloak, SHADES.cloakShadow);
-    const hoodMat = this.toon('hood', '#C24A34', SHADES.cloakShadow);
-    const umberMat = this.toon('umber', SHADES.umber, '#2E211A');
-    const scarfMat = this.toon('scarf', SHADES.scarf, '#A9542F');
-    const goldMat = this.toon('gold', PALETTE.gold, '#C39A55');
+    // One toon material for the whole figure. Colours are painted into the vertices,
+    // so parts that move together are one mesh and one draw call.
+    const mat = this.toon('figure');
 
-    // Cloak: a lathe, wide at the hem, narrow at the shoulders.
+    // Body: cloak (a lathe, wide at the hem), scarf wrap and the gold diamond on the back.
     const profile = [
       new Vector3(0.0, 0.03, 0),
       new Vector3(0.4, 0.03, 0),
@@ -82,59 +81,53 @@ export class PlayerVisual implements IPlayerVisual {
       new Vector3(0.1, 0.76, 0),
       new Vector3(0.0, 0.78, 0),
     ];
-    this.cloak = MeshBuilder.CreateLathe('player.cloak', { shape: profile, tessellation: 22, cap: 0 }, scene);
-    this.cloak.material = cloakMat;
+    const cloak = paint(MeshBuilder.CreateLathe('player.cloakPart', { shape: profile, tessellation: 22, cap: 0 }, scene), PALETTE.cloak);
+    const collar = paint(
+      MeshBuilder.CreateTorus('player.collar', { diameter: 0.4, thickness: 0.12, tessellation: 20 }, scene),
+      SHADES.scarf,
+    );
+    collar.position.set(0, 0.7, 0.01);
+    collar.scaling.y = 0.75;
+    const emblem = paint(MeshBuilder.CreatePolyhedron('player.emblem', { type: 1, size: 0.055 }, scene), PALETTE.gold);
+    emblem.scaling.set(0.7, 1.1, 0.25);
+    emblem.position.set(0, 0.44, -0.3);
+    this.cloak = merge('player.cloak', [cloak, collar, emblem]);
+    this.cloak.material = mat;
     this.cloak.parent = this.body;
 
     // Hood: big and round with a soft point that leans back, like the reference art.
+    // Face: a deep shadow in the hood opening, seen when walking toward the camera.
     this.hoodGroup = new TransformNode('player.hoodGroup', scene);
     this.hoodGroup.parent = this.body;
     this.hoodGroup.position.set(0, 0.9, 0);
-    const hood = MeshBuilder.CreateSphere('player.hood', { diameter: 0.5, segments: 16 }, scene);
+    const hood = paint(MeshBuilder.CreateSphere('player.hoodPart', { diameter: 0.5, segments: 16 }, scene), '#C24A34');
     hood.scaling.set(1, 0.98, 1.04);
-    hood.material = hoodMat;
-    hood.parent = this.hoodGroup;
-    const tip = MeshBuilder.CreateCylinder(
-      'player.hoodTip',
-      { diameterTop: 0, diameterBottom: 0.3, height: 0.3, tessellation: 14 },
-      scene,
+    const tip = paint(
+      MeshBuilder.CreateCylinder('player.hoodTip', { diameterTop: 0, diameterBottom: 0.3, height: 0.3, tessellation: 14 }, scene),
+      '#C24A34',
     );
     tip.position.set(0, 0.21, -0.07);
     tip.rotation.x = -0.5;
-    tip.material = hoodMat;
-    tip.parent = this.hoodGroup;
-    // Face: a deep shadow in the hood opening, seen when walking toward the camera.
-    const face = MeshBuilder.CreateSphere('player.face', { diameter: 0.34, segments: 12 }, scene);
+    const face = paint(MeshBuilder.CreateSphere('player.face', { diameter: 0.34, segments: 12 }, scene), SHADES.umber);
     face.scaling.set(0.95, 0.9, 0.4);
     face.position.set(0, -0.04, 0.2);
-    face.material = umberMat;
-    face.parent = this.hoodGroup;
+    const hoodMesh = merge('player.hood', [hood, tip, face]);
+    hoodMesh.material = mat;
+    hoodMesh.parent = this.hoodGroup;
 
-    // Scarf: a thick wrap under the hood and a long tail that trails behind and sways.
-    const collar = MeshBuilder.CreateTorus('player.collar', { diameter: 0.4, thickness: 0.12, tessellation: 20 }, scene);
-    collar.position.set(0, 0.7, 0.01);
-    collar.scaling.y = 0.75;
-    collar.material = scarfMat;
-    collar.parent = this.body;
-    this.scarfTail = MeshBuilder.CreateBox('player.scarfTail', { width: 0.13, height: 0.5, depth: 0.035 }, scene);
+    // Scarf tail: trails behind and sways.
+    this.scarfTail = paint(MeshBuilder.CreateBox('player.scarfTail', { width: 0.13, height: 0.5, depth: 0.035 }, scene), SHADES.scarf);
     this.scarfTail.bakeTransformIntoVertices(Matrix.Translation(0, -0.25, 0));
     this.scarfTail.position.set(0.12, 0.72, -0.2);
-    this.scarfTail.material = scarfMat;
+    this.scarfTail.material = mat;
     this.scarfTail.parent = this.body;
-
-    // Gold diamond on the back of the cloak, from the reference design.
-    const emblem = MeshBuilder.CreatePolyhedron('player.emblem', { type: 1, size: 0.055 }, scene);
-    emblem.scaling.set(0.7, 1.1, 0.25);
-    emblem.position.set(0, 0.44, -0.3);
-    emblem.material = goldMat;
-    emblem.parent = this.body;
 
     // Feet.
     for (const side of [-1, 1]) {
-      const foot = MeshBuilder.CreateSphere(`player.foot${side}`, { diameter: 0.2, segments: 8 }, scene);
+      const foot = paint(MeshBuilder.CreateSphere(`player.foot${side}`, { diameter: 0.2, segments: 8 }, scene), SHADES.umber);
       foot.scaling.set(0.62, 0.42, 0.9);
       foot.position.set(0.11 * side, 0.04, 0.05);
-      foot.material = umberMat;
+      foot.material = mat;
       foot.parent = this.root;
       this.feet.push(foot);
     }
@@ -169,8 +162,9 @@ export class PlayerVisual implements IPlayerVisual {
     }
   }
 
-  private toon(name: string, hex: string, shadowHex: string): ToonMaterial {
-    const mat = createToonMaterial(`player.${name}`, this.root.getScene(), color3(hex), color3(shadowHex));
+  private toon(name: string): ToonMaterial {
+    // With vertex colours, the two colours are multipliers: lit side and shadow side.
+    const mat = createToonMaterial(`player.${name}`, this.root.getScene(), new Color3(1, 1, 1), new Color3(0.66, 0.5, 0.5));
     this.toonMats.push(mat);
     return mat;
   }
@@ -233,4 +227,21 @@ export class PlayerVisual implements IPlayerVisual {
   dispose(): void {
     this.root.dispose(false, false);
   }
+}
+
+/** Paints a mesh in one colour (vertex colours). */
+function paint(mesh: Mesh, hex: string): Mesh {
+  const c = Color3.FromHexString(hex);
+  const count = mesh.getTotalVertices();
+  const colors = new Float32Array(count * 4);
+  for (let i = 0; i < count; i++) colors.set([c.r, c.g, c.b, 1], i * 4);
+  mesh.setVerticesData(VertexBuffer.ColorKind, colors);
+  return mesh;
+}
+
+/** Bakes the parts' transforms and merges them into one mesh. */
+function merge(name: string, parts: Mesh[]): Mesh {
+  const merged = Mesh.MergeMeshes(parts, true, true)!;
+  merged.name = name;
+  return merged;
 }

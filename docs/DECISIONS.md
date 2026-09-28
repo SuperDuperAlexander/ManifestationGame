@@ -37,3 +37,44 @@ checks after each milestone (`npm run check:browser`). It is not part of the gam
 
 **D7. `vite.config.ts` is not type-checked by `tsc`.** Type-checking it needs `@types/node`,
 one more dependency for no gain. Vite checks it when it runs.
+
+## Milestone 4 — Fairy
+
+**D8. Dialogue is a calm line at the bottom of the screen**, not a speech bubble in the world.
+It stays readable on phones and never hides behind trees.
+
+**D9. Sounds are synthesized (Web Audio), no audio files yet.** A soft chime for hints and a warm
+chord for a released fog. Real music and samples can plug into `src/core/Sound.ts` later (milestone 8).
+
+**D10. A small start screen ("press any key or tap").** Browsers only allow sound after a key press
+or tap, and the player should wake up on the meadow only when someone is watching.
+
+**D11. Glow is made with soft additive light cards, not Babylon's GlowLayer.**
+The GlowLayer would draw the un-bent world (see D4), so glows would float in the wrong place.
+Light cards bend with the world and cost almost nothing on phones.
+
+## Milestone 5 — Data-driven chapter
+
+**D12. The chapter file format is extended** (all in `src/types/chapter.ts`):
+zones have an `origin` (world position) and walkable `areas`; `terrain` holds the base ground,
+the paths between zones, the river and the chasm; `assets` holds each prop's default height,
+collider and shadow; `props` support rows (`line` + `count`) and scatters.
+`scale` means the card height in metres.
+
+**D13. Backdrop layers hang in front of the camera and are placed in screen space.**
+The sky covers the top of the screen; mountains span the width and are sunk below the horizon
+so only their upper part shows ("rise" = how far above the horizon, in screen heights).
+The mountain images do not tile, so each layer is one wide copy. Parallax moves layers sideways
+with the camera (near layers more than far ones). Order is fixed with `alphaIndex` 0–4.
+
+**D14. Camera 36°, stronger bend.** The sky now takes about a quarter of the screen.
+The chasm is 8 m wide and the gate stands 8 m behind it, so the gate is visible from the bridge.
+
+**D15. Streaming uses the zone `neighbours` from the file**, plus a 3-second grace time before a
+zone is unloaded. Neighbours include zones that can be seen from a zone, not only those joined by a path.
+
+**D16. Culling per prop group.** Every tree group, fog and ground piece is hidden when it is off screen
+or sunk behind the bent horizon. This keeps draw calls between about 30 and 60 (budget: 100).
+
+**D17. New fairy lines** (drafts, please check): hints for the start, oak, well, forest, ruins,
+monolith, river, ford, hidden path and chasm, plus short lines after each release. All in `en.json`.

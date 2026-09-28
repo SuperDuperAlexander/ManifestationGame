@@ -82,6 +82,7 @@ uniform vec4 uReveal;
 uniform vec4 uUv;
 uniform float uAlphaCut;
 uniform float uTime;
+uniform vec4 uLayer;
 varying vec2 vUv;
 varying vec2 vLocal;
 varying vec3 vWorld;
@@ -133,6 +134,12 @@ void main(void) {
   c.a = 1.0;
 #endif
   c.rgb = mix(c.rgb, uHazeColor.rgb, vHaze);
+#ifdef LAYERHAZE
+  // Far layers: lower contrast and blend toward the pale sky colour.
+  float lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+  c.rgb = mix(c.rgb, vec3(lum), uLayer.x * 0.35);
+  c.rgb = mix(c.rgb, uLayer.yzw, uLayer.x);
+#endif
   gl_FragColor = c;
 }
 `;
@@ -159,6 +166,8 @@ export interface PaperMaterialOptions {
   water?: boolean;
   /** Only visible inside the player's light radius. */
   reveal?: boolean;
+  /** Backdrop layers: haze toward a colour (set with setPaperLayerHaze). */
+  layerHaze?: boolean;
   /** Set false for things in the sky or backdrop. */
   haze?: boolean;
   /** Set false for things that must not bend (none in the world). */
@@ -177,6 +186,7 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
   if (opts.radialEdge !== undefined) defines.push('RADIAL');
   if (opts.water) defines.push('WATER');
   if (opts.reveal) defines.push('REVEAL');
+  if (opts.layerHaze) defines.push('LAYERHAZE');
 
   const blend = !!(opts.alphaBlend || opts.additive);
   const mat = new ShaderMaterial(
@@ -197,6 +207,7 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
         'uReveal',
         'uAlphaCut',
         'uTime',
+        'uLayer',
       ],
       samplers: ['uTex'],
       defines,
@@ -239,6 +250,11 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
 /** Sets the texture offset (for flowing water) and the repeat. */
 export function setPaperUv(mat: PaperMaterial, scaleX: number, scaleY: number, offsetX: number, offsetY: number): void {
   mat.setArray4('uUv', [scaleX, scaleY, offsetX, offsetY]);
+}
+
+/** Backdrop haze: amount 0..1 toward a colour. */
+export function setPaperLayerHaze(mat: PaperMaterial, amount: number, r: number, g: number, b: number): void {
+  mat.setArray4('uLayer', [amount, r, g, b]);
 }
 
 /** Sets the colour multiplier (alpha included). */

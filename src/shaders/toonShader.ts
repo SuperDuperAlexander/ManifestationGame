@@ -18,7 +18,14 @@ uniform mat4 world;
 uniform mat4 viewProjection;
 uniform vec4 uCurve;
 varying vec3 vNormal;
+#ifdef VERTEXCOLOR
+attribute vec4 color;
+varying vec3 vColor;
+#endif
 void main(void) {
+#ifdef VERTEXCOLOR
+  vColor = color.rgb;
+#endif
   vec4 wp = world * vec4(position, 1.0);
   float d = max(wp.z - uCurve.x - uCurve.y, 0.0);
   wp.y -= uCurve.z * d * d;
@@ -33,12 +40,20 @@ uniform vec3 uColor;
 uniform vec3 uShadow;
 uniform float uGlow;
 varying vec3 vNormal;
+#ifdef VERTEXCOLOR
+varying vec3 vColor;
+#endif
 void main(void) {
   vec3 L = normalize(vec3(0.75, 0.9, -0.35));
   float ndl = dot(normalize(vNormal), L);
   // Two soft bands: paper-like, no hard terminator.
   float lit = smoothstep(-0.35, 0.45, ndl);
+#ifdef VERTEXCOLOR
+  // Vertex colour is the lit colour; uColor and uShadow scale it for each side.
+  vec3 c = mix(vColor * uShadow, vColor * uColor, lit);
+#else
   vec3 c = mix(uShadow, uColor, lit);
+#endif
   // Gentle warm rim on the right edge.
   c += vec3(0.06, 0.04, 0.0) * smoothstep(0.5, 1.0, ndl);
   c = mix(c, vec3(1.0, 0.93, 0.74), uGlow * 0.55);

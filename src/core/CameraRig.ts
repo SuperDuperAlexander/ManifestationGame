@@ -16,6 +16,8 @@ export class CameraRig {
   private readonly offset = new Vector3();
   /** Screen height share (0 = top, 1 = bottom) where the bent ground meets the sky. */
   horizonFromTop = 0.3;
+  /** Distance ahead of the look-at point where the bent ground forms the horizon. */
+  horizonDz = 15;
   private portrait = false;
 
   constructor(private readonly scene: Scene) {
@@ -84,7 +86,10 @@ export class CameraRig {
       p.set(0, -TUNING.curve.strength * d * d, dz);
       const s = Vector3.TransformCoordinates(p, vp);
       const fromTop = 0.5 - s.y * 0.5;
-      if (s.z > 0 && s.z < 1 && fromTop < top) top = fromTop;
+      if (s.z > 0 && s.z < 1 && fromTop < top) {
+        top = fromTop;
+        this.horizonDz = dz;
+      }
     }
     this.target.copyFrom(saved);
     this.apply();

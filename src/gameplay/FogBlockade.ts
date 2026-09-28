@@ -29,6 +29,8 @@ export interface FogBlockadeData {
   stretch?: number;
   /** False = cannot be breathed away (fog walls that open by story). */
   breathable?: boolean;
+  /** False = drifting mist you can walk through (default: solid). */
+  solid?: boolean;
 }
 
 export type FogState = 'solid' | 'dissolving' | 'released';
@@ -63,7 +65,7 @@ export class FogBlockade {
     const size = data.size ?? 1;
     const stretch = data.stretch ?? 1;
     this.position = new Vector3(data.x, 0, data.z);
-    this.collider = { x: data.x, z: data.z, r: TUNING.fog.colliderRadius * size, active: true };
+    this.collider = { x: data.x, z: data.z, r: TUNING.fog.colliderRadius * size, active: data.solid !== false };
 
     this.mat = createFogMaterial(`fogMat:${data.id}`, scene, procTexture(scene, 'puff'));
     this.puffs = MeshBuilder.CreatePlane(`fog:${data.id}`, { size: 1 }, scene);
@@ -236,6 +238,13 @@ export class FogBlockade {
       this.text.setAlpha(base * flick);
       this.text.mesh.position.x = this.data.x + Math.sin(this.time * 19) * 0.08 * this.wobble;
     }
+  }
+
+  /** Hidden while its zone is off screen. */
+  setVisible(v: boolean): void {
+    this.puffs.setEnabled(v && this.state !== 'released');
+    this.text?.mesh.setEnabled(v);
+    this.releaseText?.mesh.setEnabled(v);
   }
 
   dispose(): void {

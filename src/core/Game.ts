@@ -11,7 +11,10 @@ import { PlayerController } from '../player/PlayerController';
 import { PlayerVisual } from '../player/PlayerVisual';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { WORLD_UNIFORMS } from '../shaders/paperShader';
-import { buildGreybox } from '../world/Greybox';
+import { loadChapter, resolveChapter, buildWalkability, type ResolvedChapter } from '../world/ChapterLoader';
+import { Terrain } from '../world/Terrain';
+import { Backdrop } from '../world/Backdrop';
+import { ZoneStreamer } from '../world/ZoneStreamer';
 import { BreathSystem } from '../player/BreathSystem';
 import { BreathVisuals } from '../player/BreathVisuals';
 import { BreathGuide } from '../ui/BreathGuide';
@@ -56,6 +59,13 @@ export class Game {
   /** 0 = lying on the meadow, 1 = standing. */
   private awake = 1;
   private waking = false;
+  private wakeDone = false;
+  private introPending = false;
+  private readonly firedEvents = new Set<string>();
+  chapter: ResolvedChapter | null = null;
+  terrain: Terrain;
+  backdrop: Backdrop;
+  streamer: ZoneStreamer | null = null;
   /** True on touch devices: letting go of the breath button breathes out. */
   touchMode = false;
   private time = 0;
@@ -92,10 +102,14 @@ export class Game {
     this.companion = new Companion(this.fairy, this.dialogue, this.events, this.sound, () => this.touchMode);
     this.input.attach();
     this.input.onFirstInteraction(() => this.sound.unlock());
+    this.terrain = new Terrain(this.scene, this.assets);
+    this.backdrop = new Backdrop(this.scene, this.rig, this.assets);
+    this.events.on('zoneEntered', (e) => this.onZoneEntered(e.id));
 
     window.addEventListener('resize', () => {
       this.engine.resize();
       this.rig.onResize();
+      this.backdrop.layout();
     });
   }
 
@@ -105,16 +119,35 @@ export class Game {
       document.fonts.load('700 64px "Work Sans"'),
       this.dialogue.load('./data/dialogue/en.json'),
     ]);
-    await buildGreybox(this.scene, this.assets, this.walk, this.fogs, this.companion);
-    this.player.teleport(0, 0);
+    const spec = await loadChapter(`${import.meta.env.BASE_URL}data/chapters/ch1.json`);
+    const chapter = resolveChapter(spec);
+    this.chapter = chapter;
+    this.assets.setBase(import.meta.env.BASE_URL + spec.assetBase.replace(/^\//, ''));
+    buildWalkability(chapter, this.walk);
+    for (const zone of chapter.zones.values()) {
+      for (const h of zone.hints) this.companion.addHint(h);
+      for (const b of zone.blockades) this.companion.addHint({ id: b.id, x: b.x, z: b.z, line: 'hint', blockade: true, y: 2.8 });
+    }
+    const xs = [...chapter.zones.values()].flatMap((z) => [z.bounds.minX, z.bounds.maxX]);
+    this.backdrop.centreX = (Math.min(...xs) + Math.max(...xs)) / 2;
+    this.player.teleport(chapter.start.x, chapter.start.z);
     this.rig.snapTo(this.player.position);
+    this.streamer = new ZoneStreamer(this.scene, chapter, this.assets, this.fogs, this.events, this.rig, this.terrain);
+    await Promise.all([this.terrain.build(spec.terrain), this.backdrop.build(spec.backdrop)]);
+    // The start zone and its neighbours are ready before the first frame is shown.
+    this.pauseZoneEvents = true;
+    await this.streamer.prime(chapter.start.zone);
+    this.pauseZoneEvents = false;
     this.engine.runRenderLoop(() => this.frame());
     (window as unknown as { __lw: { ready: boolean } }).__lw.ready = true;
 
     if (PARAMS.has('skipintro')) {
       this.companion.skipIntro();
+      this.wakeDone = true;
+      this.firedEvents.add(`${chapter.start.zone}:0`);
       return;
     }
+    this.onZoneEntered(chapter.start.zone);
     // The player lies on the meadow until the game begins.
     this.awake = 0;
     this.player.canMove = false;
@@ -126,14 +159,38 @@ export class Game {
     await this.wakeUp();
   }
 
-  /** Waking on the meadow: a slow rise, then the fairy arrives. */
+  /** Waking on the meadow: a slow rise. The fairy intro follows if the zone asks for it. */
   private async wakeUp(): Promise<void> {
     await wait(1.2);
     this.waking = true;
     await wait(2.6);
     this.player.canMove = true;
-    await wait(TUNING.fairy.introDelay);
-    await this.companion.playIntro();
+    this.wakeDone = true;
+    if (this.introPending) {
+      this.introPending = false;
+      await wait(TUNING.fairy.introDelay);
+      await this.companion.playIntro();
+    }
+  }
+
+  private pauseZoneEvents = false;
+
+  /** Runs the events of a zone the player walked into (from the chapter file). */
+  private onZoneEntered(zoneId: string): void {
+    if (this.pauseZoneEvents || !this.chapter) return;
+    const zone = this.chapter.zones.get(zoneId);
+    if (!zone) return;
+    zone.spec.events.forEach((ev, i) => {
+      const key = `${zoneId}:${i}`;
+      if (ev.once !== false && this.firedEvents.has(key)) return;
+      this.firedEvents.add(key);
+      if (ev.type === 'fairyIntro') {
+        if (this.wakeDone) void this.companion.playIntro();
+        else this.introPending = true;
+      } else if (ev.type === 'say' && ev.line) {
+        void this.companion.say(ev.line);
+      }
+    });
   }
 
   private frame(): void {
@@ -152,6 +209,8 @@ export class Game {
     this.player.speedFactor = this.breath.state === 'idle' ? 1 : 0.7;
     if (this.waking) this.awake = clamp01(this.awake + dt / 2.4);
     this.player.update(dt);
+    this.streamer?.update(dt, this.player.position.x, this.player.position.z);
+    this.terrain.update(dt);
     this.fogs.update(dt, this.player, this.breath, this.input.pushPressed);
     this.breathVisuals.target = this.fogs.hasTarget ? this.fogs.streamTarget : null;
     this.breathVisuals.update(dt, this.breath, this.player.position);
@@ -174,9 +233,12 @@ export class Game {
     this.dialogue.update(dt);
     this.hud.update(dt);
     this.rig.update(dt, this.player.position);
+    this.backdrop.update();
+    this.debug.loadedZones = this.streamer?.loadedIds ?? [];
 
     this.debug.extra = {
       player: `${this.player.position.x.toFixed(1)}, ${this.player.position.z.toFixed(1)}`,
+      zone: this.streamer?.current ?? '-',
       horizon: this.rig.horizonFromTop.toFixed(2),
       breath: `${this.breath.state} ${this.breath.breathLevel.toFixed(2)}`,
       rhythm: this.breath.rhythmScore.toFixed(2),
