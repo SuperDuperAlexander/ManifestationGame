@@ -61,7 +61,14 @@ export class Valley {
     const t = Math.min(d / r.width, 1);
     const beyond = Math.max(d - r.width, 0);
     // Soft rise to the rim, then a gentle climb on the sides, and a quick fall behind the north ridge.
-    return top * smooth(0, 1, t) + beyond * 0.3 * (1 - north) - north * beyond * beyond * 0.4;
+    const base = top * smooth(0, 1, t) + beyond * 0.3 * (1 - north) - north * beyond * beyond * 0.4;
+    // Inner ridges add a soft hump, never on the floor itself.
+    let ridge = 0;
+    for (const g of this.spec.ridges ?? []) {
+      const dist = polylineDistance(x, z, g.points);
+      ridge = Math.max(ridge, g.height * (1 - smooth(0, g.width, dist)));
+    }
+    return base + ridge * smooth(0, 1.5, d);
   }
 
   /** Smooth height from the precomputed grid (cheap, for per-frame use). */
@@ -107,6 +114,21 @@ export class Valley {
 function smooth(a: number, b: number, x: number): number {
   const t = Math.min(Math.max((x - a) / (b - a), 0), 1);
   return t * t * (3 - 2 * t);
+}
+
+function polylineDistance(x: number, z: number, pts: [number, number][]): number {
+  let best = Infinity;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ax, az] = pts[i]!;
+    const [bx, bz] = pts[i + 1]!;
+    const vx = bx - ax;
+    const vz = bz - az;
+    const len2 = vx * vx + vz * vz;
+    let t = len2 > 0 ? ((x - ax) * vx + (z - az) * vz) / len2 : 0;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    best = Math.min(best, Math.hypot(x - (ax + vx * t), z - (az + vz * t)));
+  }
+  return best;
 }
 
 function insidePolygon(x: number, z: number, p: Poly): boolean {

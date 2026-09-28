@@ -8,7 +8,7 @@ import { Random } from '../core/Random';
  * Soft textures painted in code with a 2D canvas: glows, blob shadows, fog puffs.
  * Made once per scene and shared.
  */
-export type ProcTexName = 'dot' | 'halo' | 'aura' | 'wing' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank';
+export type ProcTexName = 'dot' | 'halo' | 'aura' | 'wing' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank' | 'beam';
 
 const cache = new WeakMap<Scene, Map<ProcTexName, DynamicTexture>>();
 
@@ -44,6 +44,30 @@ function radial(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number
 
 function paint(scene: Scene, name: ProcTexName): DynamicTexture {
   switch (name) {
+    case 'beam': {
+      // A column of light: bright soft core, golden edges, fading out at the top and the ground.
+      const [tex, ctx] = make(scene, name, 128, 256);
+      const across = ctx.createLinearGradient(0, 0, 128, 0);
+      across.addColorStop(0, 'rgba(235,197,122,0)');
+      across.addColorStop(0.3, 'rgba(240,205,135,0.45)');
+      across.addColorStop(0.5, 'rgba(255,248,228,1)');
+      across.addColorStop(0.7, 'rgba(240,205,135,0.45)');
+      across.addColorStop(1, 'rgba(235,197,122,0)');
+      ctx.fillStyle = across;
+      ctx.fillRect(0, 0, 128, 256);
+      // Fade along the length (canvas y = 0 is the top of the beam).
+      ctx.globalCompositeOperation = 'destination-in';
+      const along = ctx.createLinearGradient(0, 0, 0, 256);
+      along.addColorStop(0, 'rgba(0,0,0,0)');
+      along.addColorStop(0.25, 'rgba(0,0,0,0.7)');
+      along.addColorStop(0.9, 'rgba(0,0,0,1)');
+      along.addColorStop(1, 'rgba(0,0,0,0.4)');
+      ctx.fillStyle = along;
+      ctx.fillRect(0, 0, 128, 256);
+      ctx.globalCompositeOperation = 'source-over';
+      tex.update();
+      return tex;
+    }
     case 'dot': {
       // Particle: warm white core, gold falloff.
       const [tex, ctx] = make(scene, name, 64, 64);

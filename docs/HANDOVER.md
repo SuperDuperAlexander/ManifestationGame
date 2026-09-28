@@ -89,6 +89,9 @@ Rejected duplicates (`sky_2`, `mountains_far_2`, `landmark_far_2`, `tree_round_2
 - Automatic browser checks: `npm run check:browser -- --scenario <name>` (see `README.md`).
 - Alexander's feedback from section 6 is done (D25–D32): one compact closed valley, free walking on the
   whole floor, no more ball look, lower fixed camera, see-through trees.
+- **MVP level** (D33–D39): one winding path, a river with a ford, a pass between two ridges, two fogs
+  ("I'm not worthy", "I'm angry"), two breaths each, 20 points build the bridge, world mood, light beam,
+  the fairy teaches "push first, then breathe" and shows the way.
 - **Milestone 8 (polish) is not started.**
 
 ### Open questions (none blocks work)

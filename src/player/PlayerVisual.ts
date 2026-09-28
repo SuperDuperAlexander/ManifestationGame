@@ -24,6 +24,8 @@ export interface PlayerVisualState {
   breathLevel: number;
   /** 0..1 extra glow while inhaling. */
   glow: number;
+  /** 0..1 lasting inner light (grows with every released blockade). */
+  innerLight: number;
   /** 0 = lying on the meadow, 1 = standing. */
   awake: number;
 }
@@ -215,12 +217,14 @@ export class PlayerVisual implements IPlayerVisual {
       foot.isVisible = awake > 0.5;
     }
 
-    // Glow while inhaling.
+    // Glow while inhaling, on top of a lasting, softly pulsing inner light.
     const glow = Math.max(s.glow, 0);
-    for (const m of this.toonMats) m.glow = glow * 0.45;
-    this.halo.isVisible = glow > 0.02;
-    setPaperColor(this.haloMat, new Color4(1, 1, 1, Math.min(0.6, glow * 0.8)));
-    const hs = 0.9 + glow * 0.5;
+    const inner = Math.max(s.innerLight, 0) * (1 + Math.sin(this.time * 1.3) * 0.08);
+    for (const m of this.toonMats) m.glow = Math.min(0.8, glow * 0.45 + inner * 0.3);
+    const haloAlpha = Math.min(0.8, glow * 0.8 + inner * 0.55);
+    this.halo.isVisible = haloAlpha > 0.02;
+    setPaperColor(this.haloMat, new Color4(1, 1, 1, haloAlpha));
+    const hs = 0.9 + glow * 0.5 + inner * 0.6;
     this.halo.scaling.set(hs, hs, hs);
   }
 

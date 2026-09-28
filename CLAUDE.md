@@ -109,16 +109,25 @@ The world is **simple real 3D** that looks like **paper layers**.
 - **Between chapters**: a large fog gate. Transition = 2–3 s light-and-fog blend, no menu.
 - The game is **data-driven**. New content = new JSON + new assets. The engine code does not change.
 
-### Chapter 1 map
+### Chapter 1 map (MVP level, see `docs/DECISIONS.md` D33–D39)
 ```
-[Forest: 2 fog]   [Ruins: 2 fog]   [River: 2 fog]
-        \               |               /
-[Meadow (start)] — [Clearing (hub)] — - - [Chasm (goal, light bridge)]
+                 [Ledge with the gate]
+                         |  light bridge
+                 [Chasm (goal)]
+                         |
+      ridge ==== [Pass: fog "I'm angry"] ==== ridge
+                         |
+          [Middle of the valley, winding path]
+                         |
+ river ~~~~~~~~ [Ford: fog "I'm not worthy"] ~~~~~~~~ river
+                         |
+                 [Meadow (start)]
 ```
-- Meadow: start, fairy intro.
-- Clearing: central hub with old oak and well.
-- Forest, Ruins, River: 2 blockades each, any order.
-- Chasm: exit. The big fog gate opens when enough light points are collected.
+- One winding path leads from the meadow to the chasm. The player may walk anywhere on the floor,
+  but the river and the hill ridge leave only one way through: the ford and the pass.
+- Each fog sits on that way and closes it. Two calm breaths dissolve one fog: 10 light points each.
+- 20 points (both fogs) build the light bridge. The gate opens when the bridge is walkable.
+- The larger chapter (forest, ruins, clearing, 6 fogs) comes back after the MVP.
 
 ---
 
@@ -305,21 +314,23 @@ scripts/
 
 ## 10. Content (English) — drafts, Alexander must approve
 
-Blockades for chapter 1:
+Blockades of the chapter 1 MVP level (in `ch1.json`):
 
-| Zone | Blockade | Release |
+| Place | Blockade | Release |
 |---|---|---|
-| Forest | I'm not worthy | I am worthy |
-| Forest | I'm so angry | I choose peace |
-| Ruins | I'm not enough | I am enough |
-| Ruins | I'm afraid | I am safe |
-| River | I'm alone | I am connected |
-| River | I can't change | I can grow |
+| Ford over the river | I'm not worthy | I am worthy |
+| Pass between the ridges | I'm angry | I choose peace |
 
-Fairy lines (drafts):
+Kept for the full chapter later: I'm not enough / I am enough, I'm afraid / I am safe,
+I'm alone / I am connected, I can't change / I can grow.
+
+Fairy lines (drafts, all in `public/data/dialogue/en.json`):
 - Intro: "Hello, little light. I'll walk this path with you."
 - Intro: "This valley is full of fog. Some of it lives inside us."
-- First blockade: "Force doesn't help here. Breathe."
+- Intro (task): "Follow the path through the valley, all the way to the chasm."
+- First blockade: "Look. A blockade is blocking the path." / "Try to push it away first."
+- After the first push: "See? Force only makes it grow." / "Let's try another way."
+- Later pushes: "Force doesn't help here. Breathe."
 - Breathing tip: "Breathe in… let your light grow. Breathe out… let it flow."
 - Hint: "Something is waiting over there."
 - Bridge: "Every fog you released became light. Look."

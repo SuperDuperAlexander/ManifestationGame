@@ -5,12 +5,13 @@ import type { BaseTexture } from '@babylonjs/core/Materials/Textures/baseTexture
 import type { Scene } from '@babylonjs/core/scene';
 import '@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/instancesVertex';
-import { WORLD_UNIFORMS } from './paperShader';
+import { MOOD_GLSL, WORLD_UNIFORMS } from './paperShader';
 
 /**
- * Fog cloud shader. Soft painted puffs that drift and wobble.
+ * Fog cloud shader. Soft painted puffs that drift, sway around the cloud centre and wobble.
  * Dissolve: a noise pattern eats the puffs from the edges inward as the density falls.
- * Push: the puffs shake and grow darker and denser for a moment.
+ * Push: the puffs shake and grow darker and denser for a moment; the cloud also grows
+ * (uCentre.w) and stays bigger and darker until breathing shrinks it again.
  */
 const VERTEX = /* glsl */ `
 precision highp float;
@@ -19,6 +20,7 @@ attribute vec2 uv;
 #include<instancesDeclaration>
 uniform mat4 viewProjection;
 uniform vec4 uFog; // x: time, y: wobble, z: surge, w: seed
+uniform vec4 uCentre; // x, z: cloud centre on the ground, w: growth from pushing
 varying vec2 vUv;
 varying vec3 vWorld;
 varying float vPhase;
@@ -31,12 +33,22 @@ void main(void) {
   vec3 origin = (finalWorld * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
   float phase = fract(sin(dot(origin.xz, vec2(12.9898, 78.233))) * 43758.5453) * 6.2831;
   vPhase = phase;
-  // Calm drift, plus a quick shake when pushed.
   float t = uFog.x;
+  // Each puff sways slowly around the cloud centre: the fog rolls in on itself.
+  vec2 rel = origin.xz - uCentre.xy;
+  float ang = sin(t * 0.21 + phase) * 0.3;
+  vec2 rot = vec2(rel.x * cos(ang) - rel.y * sin(ang), rel.x * sin(ang) + rel.y * cos(ang));
+  vec3 moved = vec3(uCentre.x + rot.x, origin.y + sin(t * 0.33 + phase * 1.3) * 0.15, uCentre.y + rot.y);
+  wp.xyz += moved - origin;
+  origin = moved;
+  // Calm drift, plus a quick shake when pushed.
   wp.x += sin(t * 0.5 + phase) * 0.12 + sin(t * 17.0 + phase * 3.0) * uFog.y * 0.22;
   wp.y += sin(t * 0.37 + phase * 1.7) * 0.08 + cos(t * 13.0 + phase) * uFog.y * 0.12;
-  // Grow a little when surging.
-  wp.xyz = origin + (wp.xyz - origin) * (1.0 + uFog.z * 0.18);
+  // Each puff swells and shrinks a little, more when surging.
+  wp.xyz = origin + (wp.xyz - origin) * (1.0 + 0.07 * sin(t * 0.6 + phase * 2.0) + uFog.z * 0.18);
+  // The whole cloud grows from its centre when pushed.
+  vec3 base = vec3(uCentre.x, 0.0, uCentre.y);
+  wp.xyz = base + (wp.xyz - base) * (1.0 + uCentre.w);
   vUv = uv;
   vWorld = wp.xyz;
 #ifdef INSTANCESCOLOR
@@ -51,6 +63,8 @@ precision highp float;
 uniform sampler2D uTex;
 uniform vec4 uFog;
 uniform vec4 uFade; // x: density 0..1+, y: global alpha, z: gold (0..1)
+uniform vec4 uCentre;
+uniform vec4 uMood;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying float vPhase;
@@ -72,6 +86,9 @@ void main(void) {
   // Pushed: denser and a touch darker, bluish grey.
   c.rgb = mix(c.rgb, c.rgb * vec3(0.78, 0.8, 0.9), uFog.z * 0.8);
   c.a = min(1.0, c.a * (1.0 + uFog.z * 0.6));
+  // Grown by force: heavier and darker.
+  c.rgb = mix(c.rgb, c.rgb * vec3(0.6, 0.62, 0.72), clamp(uCentre.w * 1.4, 0.0, 0.75));
+  c.a = min(1.0, c.a * (1.0 + uCentre.w));
   // Dissolve: noise threshold. Lower density = more of the cloud is gone.
   float n = noise(vUv * 5.0 + vPhase) * 0.6 + noise(vUv * 11.0 - vPhase) * 0.4;
   float edge = length(vUv - 0.5) * 1.1;
@@ -82,15 +99,27 @@ void main(void) {
   // Turning into light: warm gold at the dissolving edges.
   float rim = smoothstep(0.0, 0.25, vis) * (1.0 - smoothstep(0.25, 0.9, vis));
   c.rgb = mix(c.rgb, vec3(1.0, 0.86, 0.55), clamp(rim * 0.9 + uFade.z * 0.5, 0.0, 1.0) * (1.0 - smoothstep(0.9, 1.1, keep)));
+MOOD_PLACEHOLDER
   gl_FragColor = c;
 }
-`;
+`.replace('MOOD_PLACEHOLDER', MOOD_GLSL);
 
 Effect.ShadersStore['fogVertexShader'] = VERTEX;
 Effect.ShadersStore['fogFragmentShader'] = FRAGMENT;
 
 export type FogMaterial = ShaderMaterial & {
-  fog: { wobble: number; surge: number; density: number; alpha: number; gold: number; seed: number };
+  fog: {
+    wobble: number;
+    surge: number;
+    density: number;
+    alpha: number;
+    gold: number;
+    seed: number;
+    /** Cloud centre on the ground and its growth from pushing. */
+    cx: number;
+    cz: number;
+    grow: number;
+  };
 };
 
 export function createFogMaterial(name: string, scene: Scene, texture: BaseTexture): FogMaterial {
@@ -100,12 +129,12 @@ export function createFogMaterial(name: string, scene: Scene, texture: BaseTextu
     { vertex: 'fog', fragment: 'fog' },
     {
       attributes: ['position', 'uv'],
-      uniforms: ['world', 'viewProjection', 'uFog', 'uFade'],
+      uniforms: ['world', 'viewProjection', 'uFog', 'uFade', 'uCentre', 'uMood'],
       samplers: ['uTex'],
       needAlphaBlending: true,
     },
   ) as FogMaterial;
-  mat.fog = { wobble: 0, surge: 0, density: 1, alpha: 1, gold: 0, seed: Math.random() * 10 };
+  mat.fog = { wobble: 0, surge: 0, density: 1, alpha: 1, gold: 0, seed: Math.random() * 10, cx: 0, cz: 0, grow: 0 };
   mat.setTexture('uTex', texture);
   mat.backFaceCulling = false;
   mat.disableDepthWrite = true;
@@ -116,6 +145,9 @@ export function createFogMaterial(name: string, scene: Scene, texture: BaseTextu
     const f = mat.fog;
     effect.setFloat4('uFog', WORLD_UNIFORMS.time + f.seed, f.wobble, f.surge, f.seed);
     effect.setFloat4('uFade', f.density, f.alpha, f.gold, 0);
+    effect.setFloat4('uCentre', f.cx, f.cz, 0, f.grow);
+    const m = WORLD_UNIFORMS.mood;
+    effect.setFloat4('uMood', m[0], m[1], m[2], m[3]);
   });
   return mat;
 }

@@ -77,6 +77,11 @@ export interface BlockadeSpec {
   text: string;
   release: string;
   points: number;
+  /** Cloud size (1 = normal) and width / height ratio. Big enough to close a path. */
+  size?: number;
+  stretch?: number;
+  /** Fairy line (en.json key) when the player comes near. Default "hint". */
+  hint?: string;
 }
 
 export interface HintSpec {
@@ -144,6 +149,11 @@ export interface ValleySpec {
    * `side` = east and west, `south` = near the camera, `north` = the low ridge in front of the backdrop.
    */
   rim: { width: number; side: number; south: number; north: number };
+  /**
+   * Extra hill ridges inside the valley (world lines), e.g. between two parts of the floor.
+   * `height` metres at the line, falling off over `width` metres.
+   */
+  ridges?: { points: Vec2[]; height: number; width: number }[];
   /** How far the hills reach beyond the floor, metres (default 28). */
   margin?: number;
   /** Grid size of the ground mesh, metres (default 1). Chasm edges should sit on this grid. */
@@ -170,6 +180,8 @@ export interface BridgeSpec {
   from: Vec2;
   to: Vec2;
   width?: number;
+  /** Planks each released blockade adds (default 1). */
+  planksPerRelease?: number;
 }
 
 export interface GateSpec {

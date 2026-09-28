@@ -31,7 +31,17 @@ export interface ResolvedZone {
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   props: PlacedProp[];
   ground: GroundSpec[];
-  blockades: { id: string; x: number; z: number; text: string; release: string; points: number }[];
+  blockades: {
+    id: string;
+    x: number;
+    z: number;
+    text: string;
+    release: string;
+    points: number;
+    size?: number;
+    stretch?: number;
+    hint: string;
+  }[];
   hints: { id: string; x: number; z: number; line: string; radius?: number }[];
   hiddenPaths: [number, number][][];
   fogWalls: { id: string; x: number; z: number; size: number; stretch: number }[];
@@ -136,7 +146,17 @@ export function resolveChapter(spec: ChapterSpec): ResolvedChapter {
 
     const blockades = z.blockades.map((b) => {
       const [bx, bz] = xz(b.pos);
-      return { id: b.id, x: ox + bx, z: oz + bz, text: b.text, release: b.release, points: b.points };
+      return {
+        id: b.id,
+        x: ox + bx,
+        z: oz + bz,
+        text: b.text,
+        release: b.release,
+        points: b.points,
+        size: b.size,
+        stretch: b.stretch,
+        hint: b.hint ?? 'hint',
+      };
     });
     const hints = z.hints.map((h) => {
       const [hx, hz] = xz(h.pos);
