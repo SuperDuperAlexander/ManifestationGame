@@ -213,7 +213,8 @@ export class ZoneStreamer {
     for (const set of this.sharedCards.values()) set.dispose();
     this.sharedCards.clear();
     for (const [asset, { img, list }] of byAsset) {
-      this.sharedCards.set(asset, new PaperCardSet(this.scene, asset, img, list, { shadows: false }));
+      const wind = this.chapter.spec.assets[asset]?.sway;
+      this.sharedCards.set(asset, new PaperCardSet(this.scene, asset, img, list, { shadows: false, wind }));
     }
 
     this.sharedShadows?.material?.dispose();

@@ -42,6 +42,8 @@ export interface AssetMeta {
   shadow?: number;
   /** Only assets that look right mirrored may be mirrored (grass, flowers). */
   mirror?: boolean;
+  /** Sway in the wind: how far the top moves, as a share of the card height (0 = still). */
+  sway?: number;
 }
 
 export interface PropSpec {

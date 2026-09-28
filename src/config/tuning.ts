@@ -231,6 +231,29 @@ export const TUNING = {
     playerLight: 0.55,
   },
 
+  /** Breeze: multiplies every asset's `sway` from the chapter file. 0 = no wind. */
+  wind: {
+    strength: 1,
+  },
+
+  /** Birds drawn in the sky: a small flock crosses now and then. */
+  birds: {
+    /** Seconds between two flocks (random between the two). */
+    pauseMin: 8,
+    pauseMax: 20,
+    /** Birds per flock. */
+    countMin: 3,
+    countMax: 6,
+    /** Seconds a flock needs to cross the screen. */
+    crossTime: 26,
+    /** Bird width as a share of the screen width. */
+    size: 0.032,
+    /** Wing beats per second. */
+    flap: 1.6,
+    color: '#4A4638',
+    alpha: 0.8,
+  },
+
   /** The golden beam from the sky when a blockade dissolves. */
   beam: {
     duration: 4.2,

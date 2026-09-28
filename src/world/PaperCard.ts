@@ -34,7 +34,13 @@ export class PaperCardSet {
   readonly material: PaperMaterial;
   readonly aspect: number;
 
-  constructor(scene: Scene, name: string, image: LoadedImage, instances: CardInstance[], opts: { shadows?: boolean } = {}) {
+  constructor(
+    scene: Scene,
+    name: string,
+    image: LoadedImage,
+    instances: CardInstance[],
+    opts: { shadows?: boolean; wind?: number } = {},
+  ) {
     this.aspect = image.width / image.height;
     this.mesh = MeshBuilder.CreatePlane(`card:${name}`, { width: this.aspect, height: 1 }, scene);
     this.mesh.bakeTransformIntoVertices(Matrix.Translation(0, 0.5, 0));
@@ -42,6 +48,7 @@ export class PaperCardSet {
       texture: image.texture,
       alphaTest: true,
       seeThrough: true,
+      wind: opts.wind,
     });
     this.mesh.material = this.material;
     this.mesh.isPickable = false;

@@ -192,3 +192,12 @@ a scarf with real physics, legs and boots, leaning, nodding and looking around. 
 `TUNING.figure`. It uses the game's own toon shader (so the world mood darkens it near a fog) and the
 game's halo, which also shows the inner light (D37). The old figure is in `legacy/figure-v1/`.
 `figure-kit/` stays as Alexander's standalone demo; changes there do not reach the game by themselves.
+
+**D43. Wind:** paper cards sway in a soft breeze, in the shader (no extra draw calls): the foot stays,
+the top moves, a slow gust rolls across the valley, and it leans to the left (the breeze comes from the right,
+like the light). How much each image sways is data: `sway` per asset in `ch1.json` (grass 0.1, flowers 0.09,
+bush 0.03, trees 0.012–0.025; rocks, ruins and the gate stay still). Global strength: `TUNING.wind.strength`.
+
+**D44. Birds in the sky** (`src/world/SkyBirds.ts`): now and then a flock of 3–6 drawn birds crosses the
+screen in a loose V, flapping and gliding, above the valley ridge and in front of the painted mountains.
+One draw call. Settings: `TUNING.birds`.

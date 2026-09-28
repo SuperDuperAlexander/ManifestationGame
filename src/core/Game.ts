@@ -14,6 +14,7 @@ import { WORLD_UNIFORMS } from '../shaders/paperShader';
 import { loadChapter, resolveChapter, buildWalkability, type ResolvedChapter } from '../world/ChapterLoader';
 import { Terrain } from '../world/Terrain';
 import { Backdrop } from '../world/Backdrop';
+import { SkyBirds } from '../world/SkyBirds';
 import { ZoneStreamer } from '../world/ZoneStreamer';
 import { LightBridge } from '../gameplay/LightBridge';
 import { ChapterGate } from '../gameplay/ChapterGate';
@@ -74,6 +75,7 @@ export class Game {
   chapter: ResolvedChapter | null = null;
   terrain: Terrain;
   backdrop: Backdrop;
+  readonly birds: SkyBirds;
   streamer: ZoneStreamer | null = null;
   bridge: LightBridge | null = null;
   gate: ChapterGate | null = null;
@@ -129,6 +131,7 @@ export class Game {
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     this.terrain = new Terrain(this.scene, this.assets);
     this.backdrop = new Backdrop(this.scene, this.rig, this.assets);
+    this.birds = new SkyBirds(this.scene, this.rig);
     this.events.on('zoneEntered', (e) => this.onZoneEntered(e.id));
     this.transition = new Transition(ui);
     this.events.on('blockadeReleased', (e) => {
@@ -384,6 +387,7 @@ export class Game {
     WORLD_UNIFORMS.see = [this.player.position.x, 0.9, this.player.position.z];
     WORLD_UNIFORMS.camera = [cam.x, cam.y, cam.z];
     this.backdrop.update();
+    this.birds.update(dt);
     this.debug.loadedZones = this.streamer?.loadedIds ?? [];
 
     this.debug.extra = {

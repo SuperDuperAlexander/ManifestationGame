@@ -60,9 +60,23 @@ varying vec4 vTint;
 attribute float shade;
 varying float vShade;
 #endif
+#ifdef WIND
+uniform vec4 uWind; // x: sway as a share of the card height, y: time
+#endif
 void main(void) {
 #include<instancesVertex>
   vec4 wp = finalWorld * vec4(position, 1.0);
+#ifdef WIND
+  // Paper cards sway in the breeze: the foot stays put, the top moves most.
+  // A slow gust wave rolls across the valley; each card also has its own rhythm.
+  vec3 cardFoot = finalWorld[3].xyz;
+  float cardHeight = length(finalWorld[1].xyz);
+  float bend = position.y * position.y;
+  float gust = 0.5 + 0.5 * sin(uWind.y * 0.55 + cardFoot.x * 0.09 + cardFoot.z * 0.04);
+  float sway = sin(uWind.y * 1.7 + cardFoot.x * 1.3 + cardFoot.z * 0.7) * 0.6 + gust * 0.8;
+  // The breeze comes from the right, like the light: cards lean to the left.
+  wp.x -= uWind.x * cardHeight * bend * sway;
+#endif
   vHaze = uHazeCfg.x * smoothstep(uHazeCfg.y, uHazeCfg.z, wp.z - uHazeCfg.w);
 #ifdef VSHADE
   vShade = shade;
@@ -209,6 +223,8 @@ export interface PaperMaterialOptions {
   vertexShade?: boolean;
   /** Cut a soft hole where the card hides the player. */
   seeThrough?: boolean;
+  /** Sway in the wind, as a share of the card height at the top (paper cards only). */
+  wind?: number;
   depthWrite?: boolean;
   backFaceCulling?: boolean;
 }
@@ -226,6 +242,7 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
   if (opts.layerHaze) defines.push('LAYERHAZE');
   if (opts.vertexShade) defines.push('VSHADE');
   if (opts.seeThrough) defines.push('SEETHROUGH');
+  if (opts.wind) defines.push('WIND');
   // Light itself (glows, beams, the bridge) keeps its brightness whatever the mood.
   if (opts.additive) defines.push('NOMOOD');
 
@@ -251,6 +268,7 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
         'uSee',
         'uCamPos',
         'uMood',
+        'uWind',
       ],
       samplers: ['uTex'],
       defines,
@@ -286,6 +304,7 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
     effect.setFloat4('uReveal', u.revealX, u.revealZ, u.revealRadius, 0);
     effect.setFloat('uTime', u.time);
     effect.setFloat4('uMood', u.mood[0], u.mood[1], u.mood[2], u.mood[3]);
+    if (opts.wind) effect.setFloat4('uWind', opts.wind * TUNING.wind.strength, u.time, 0, 0);
     if (opts.seeThrough) {
       effect.setFloat4('uSee', u.see[0], u.see[1], u.see[2], TUNING.cards.seeThroughRadius);
       effect.setFloat4('uCamPos', u.camera[0], u.camera[1], u.camera[2], 0);

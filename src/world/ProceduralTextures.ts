@@ -8,7 +8,7 @@ import { Random } from '../core/Random';
  * Soft textures painted in code with a 2D canvas: glows, blob shadows, fog puffs.
  * Made once per scene and shared.
  */
-export type ProcTexName = 'dot' | 'halo' | 'aura' | 'wing' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank' | 'beam';
+export type ProcTexName = 'dot' | 'halo' | 'aura' | 'wing' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank' | 'beam' | 'bird';
 
 const cache = new WeakMap<Scene, Map<ProcTexName, DynamicTexture>>();
 
@@ -44,6 +44,22 @@ function radial(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number
 
 function paint(scene: Scene, name: ProcTexName): DynamicTexture {
   switch (name) {
+    case 'bird': {
+      // A bird far away, drawn with two soft brush curves: the wings. White, tinted by the material.
+      const [tex, ctx] = make(scene, name, 128, 64);
+      ctx.strokeStyle = 'rgba(255,255,255,1)';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      // Thick strokes: the bird is small on screen, a thin line would vanish.
+      ctx.lineWidth = 13;
+      ctx.beginPath();
+      ctx.moveTo(10, 34);
+      ctx.quadraticCurveTo(36, 8, 64, 38);
+      ctx.quadraticCurveTo(92, 8, 118, 34);
+      ctx.stroke();
+      tex.update();
+      return tex;
+    }
     case 'beam': {
       // A column of light: bright soft core, golden edges, fading out at the top and the ground.
       const [tex, ctx] = make(scene, name, 128, 256);

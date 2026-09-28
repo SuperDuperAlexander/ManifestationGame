@@ -94,6 +94,7 @@ Rejected duplicates (`sky_2`, `mountains_far_2`, `landmark_far_2`, `tree_round_2
   the fairy teaches "push first, then breathe" and shows the way.
 - Bridge builds only after both fogs, at the chasm (D40). World bright, dark only near a fog (D41).
 - New player figure from `figure-kit/` is in the game (D42).
+- Grass, flowers and trees sway in the wind; drawn birds cross the sky (D43–D44).
 - **Milestone 8 (polish) is not started.**
 
 ### Open questions (none blocks work)
