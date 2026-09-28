@@ -11,6 +11,42 @@ export default function scenarios({ wait, shot, hold, page }) {
     }
   };
   return {
+    async closeup() {
+      const clip = { x: 490, y: 300, width: 300, height: 260 };
+      await page.screenshot({ path: `${process.argv[process.argv.indexOf('--out') + 1]}/c1-idle.png`, clip });
+      await page.keyboard.down('KeyS');
+      await wait(700);
+      await page.screenshot({ path: `${process.argv[process.argv.indexOf('--out') + 1]}/c2-walk-south.png`, clip });
+      await page.keyboard.up('KeyS');
+      await page.keyboard.down('KeyW');
+      await wait(700);
+      await page.screenshot({ path: `${process.argv[process.argv.indexOf('--out') + 1]}/c3-walk-north.png`, clip });
+      await page.keyboard.up('KeyW');
+      await page.keyboard.down('KeyD');
+      await wait(700);
+      await page.screenshot({ path: `${process.argv[process.argv.indexOf('--out') + 1]}/c4-walk-east.png`, clip });
+      await page.keyboard.up('KeyD');
+      await page.keyboard.down('Space');
+      await wait(3000);
+      await page.screenshot({ path: `${process.argv[process.argv.indexOf('--out') + 1]}/c5-inhale.png`, clip });
+      await page.keyboard.up('Space');
+    },
+    async intro() {
+      await shot('i1-lying');
+      await wait(4200);
+      await shot('i2-awake');
+      await wait(3500);
+      await shot('i3-fairy-arrives');
+      await wait(5000);
+      await shot('i4-intro-line');
+      await wait(9000);
+      await shot('i5-intro-end');
+      await hold('KeyW', 1800);
+      await wait(2500);
+      await shot('i6-teaching');
+      await wait(6000);
+      await shot('i7-teaching-2');
+    },
     async fog() {
       await shot('f1-start');
       await hold('KeyW', 1300);

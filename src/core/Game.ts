@@ -20,6 +20,14 @@ import { FogField } from '../gameplay/FogField';
 import { LightPoints } from '../gameplay/LightPoints';
 import { DialogueSystem } from '../companion/DialogueSystem';
 import { Hud } from '../ui/Hud';
+import { Sound } from './Sound';
+import { Fairy } from '../companion/Fairy';
+import { Companion } from '../companion/Companion';
+import { StartScreen } from '../ui/StartScreen';
+import { clamp01 } from './Random';
+
+/** URL switches for testing: ?autostart skips the start screen, ?skipintro also skips wake-up and intro. */
+const PARAMS = new URLSearchParams(location.search);
 
 /**
  * Owns the engine, the scene and every system. One frame = one call to `frame()`.
@@ -42,6 +50,12 @@ export class Game {
   readonly lightPoints: LightPoints;
   readonly dialogue: DialogueSystem;
   readonly hud: Hud;
+  readonly sound = new Sound();
+  readonly fairy: Fairy;
+  readonly companion: Companion;
+  /** 0 = lying on the meadow, 1 = standing. */
+  private awake = 1;
+  private waking = false;
   /** True on touch devices: letting go of the breath button breathes out. */
   touchMode = false;
   private time = 0;
@@ -74,8 +88,10 @@ export class Game {
     this.lightPoints = new LightPoints(this.events);
     this.hud = new Hud(ui, this.events);
     this.dialogue = new DialogueSystem(ui, this.events);
-    this.events.on('fogPushed', () => void this.dialogue.say('force', { interrupt: true }));
+    this.fairy = new Fairy(this.scene);
+    this.companion = new Companion(this.fairy, this.dialogue, this.events, this.sound, () => this.touchMode);
     this.input.attach();
+    this.input.onFirstInteraction(() => this.sound.unlock());
 
     window.addEventListener('resize', () => {
       this.engine.resize();
@@ -89,10 +105,35 @@ export class Game {
       document.fonts.load('700 64px "Work Sans"'),
       this.dialogue.load('./data/dialogue/en.json'),
     ]);
-    await buildGreybox(this.scene, this.assets, this.walk, this.fogs);
+    await buildGreybox(this.scene, this.assets, this.walk, this.fogs, this.companion);
     this.player.teleport(0, 0);
     this.rig.snapTo(this.player.position);
     this.engine.runRenderLoop(() => this.frame());
+    (window as unknown as { __lw: { ready: boolean } }).__lw.ready = true;
+
+    if (PARAMS.has('skipintro')) {
+      this.companion.skipIntro();
+      return;
+    }
+    // The player lies on the meadow until the game begins.
+    this.awake = 0;
+    this.player.canMove = false;
+    if (!PARAMS.has('autostart')) {
+      const start = new StartScreen(this.ui, this.dialogue.line('startPrompt'));
+      await start.waitForStart();
+      this.sound.unlock();
+    }
+    await this.wakeUp();
+  }
+
+  /** Waking on the meadow: a slow rise, then the fairy arrives. */
+  private async wakeUp(): Promise<void> {
+    await wait(1.2);
+    this.waking = true;
+    await wait(2.6);
+    this.player.canMove = true;
+    await wait(TUNING.fairy.introDelay);
+    await this.companion.playIntro();
   }
 
   private frame(): void {
@@ -109,6 +150,7 @@ export class Game {
     });
     // Breathing slows the walk: a calm pace to go with the breath.
     this.player.speedFactor = this.breath.state === 'idle' ? 1 : 0.7;
+    if (this.waking) this.awake = clamp01(this.awake + dt / 2.4);
     this.player.update(dt);
     this.fogs.update(dt, this.player, this.breath, this.input.pushPressed);
     this.breathVisuals.target = this.fogs.hasTarget ? this.fogs.streamTarget : null;
@@ -125,8 +167,9 @@ export class Game {
       heading: this.player.heading,
       breathLevel: this.breath.breathLevel,
       glow: this.breathVisuals.glow,
-      awake: 1,
+      awake: this.awake,
     });
+    this.companion.update(dt, this.player.position);
     this.breathGuide.update(dt, this.breath);
     this.dialogue.update(dt);
     this.hud.update(dt);
@@ -145,4 +188,8 @@ export class Game {
     this.scene.render();
     this.input.endFrame();
   }
+}
+
+function wait(seconds: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, seconds * 1000));
 }

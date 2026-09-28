@@ -18,7 +18,7 @@ export const SHADES = {
   /** Soft ink for text: a deep, warm grey-blue. Never pure black. */
   ink: '#4E5566',
   /** The cloak's shadow side. */
-  cloakShadow: '#8A2F22',
+  cloakShadow: '#7A2519',
   /** Scarf on the cloak, from the reference design. */
   scarf: '#DA7A4A',
   /** Warm dark brown for feet and the face shadow. */

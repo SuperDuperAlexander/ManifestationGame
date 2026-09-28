@@ -60,7 +60,8 @@ export const TUNING = {
     deceleration: 11,
     turnSharpness: 10,
     radius: 0.4,
-    height: 1.15,
+    /** Size of the figure. 1 = about 1.15 m tall. */
+    visualScale: 1.2,
   },
 
   cards: {

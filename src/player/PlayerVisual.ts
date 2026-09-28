@@ -1,7 +1,7 @@
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
 import { Constants } from '@babylonjs/core/Engines/constants';
 import type { Scene } from '@babylonjs/core/scene';
@@ -10,6 +10,7 @@ import { createToonMaterial, type ToonMaterial } from '../shaders/toonShader';
 import { createPaperMaterial, setPaperColor, type PaperMaterial } from '../shaders/paperShader';
 import { procTexture } from '../world/ProceduralTextures';
 import { damp } from '../core/Random';
+import { TUNING } from '../config/tuning';
 
 export interface PlayerVisualState {
   /** Ground speed, m/s. */
@@ -61,67 +62,70 @@ export class PlayerVisual implements IPlayerVisual {
     this.root = new TransformNode('player', scene);
     this.body = new TransformNode('player.body', scene);
     this.body.parent = this.root;
+    this.root.scaling.setAll(TUNING.player.visualScale);
 
     const cloakMat = this.toon('cloak', PALETTE.cloak, SHADES.cloakShadow);
+    const hoodMat = this.toon('hood', '#C24A34', SHADES.cloakShadow);
     const umberMat = this.toon('umber', SHADES.umber, '#2E211A');
     const scarfMat = this.toon('scarf', SHADES.scarf, '#A9542F');
     const goldMat = this.toon('gold', PALETTE.gold, '#C39A55');
 
     // Cloak: a lathe, wide at the hem, narrow at the shoulders.
     const profile = [
-      new Vector3(0.0, 0.02, 0),
-      new Vector3(0.38, 0.03, 0),
-      new Vector3(0.37, 0.1, 0),
-      new Vector3(0.31, 0.32, 0),
-      new Vector3(0.24, 0.55, 0),
-      new Vector3(0.19, 0.7, 0),
-      new Vector3(0.12, 0.78, 0),
-      new Vector3(0.0, 0.8, 0),
+      new Vector3(0.0, 0.03, 0),
+      new Vector3(0.4, 0.03, 0),
+      new Vector3(0.41, 0.08, 0),
+      new Vector3(0.36, 0.2, 0),
+      new Vector3(0.28, 0.42, 0),
+      new Vector3(0.21, 0.6, 0),
+      new Vector3(0.17, 0.7, 0),
+      new Vector3(0.1, 0.76, 0),
+      new Vector3(0.0, 0.78, 0),
     ];
     this.cloak = MeshBuilder.CreateLathe('player.cloak', { shape: profile, tessellation: 22, cap: 0 }, scene);
     this.cloak.material = cloakMat;
     this.cloak.parent = this.body;
 
-    // Hood: slightly pointed, leaning back a little.
+    // Hood: big and round with a soft point that leans back, like the reference art.
     this.hoodGroup = new TransformNode('player.hoodGroup', scene);
     this.hoodGroup.parent = this.body;
-    this.hoodGroup.position.set(0, 0.86, 0);
-    const hood = MeshBuilder.CreateSphere('player.hood', { diameter: 0.46, segments: 14 }, scene);
-    hood.scaling.set(1, 1.02, 1.06);
-    hood.material = cloakMat;
+    this.hoodGroup.position.set(0, 0.9, 0);
+    const hood = MeshBuilder.CreateSphere('player.hood', { diameter: 0.5, segments: 16 }, scene);
+    hood.scaling.set(1, 0.98, 1.04);
+    hood.material = hoodMat;
     hood.parent = this.hoodGroup;
     const tip = MeshBuilder.CreateCylinder(
       'player.hoodTip',
-      { diameterTop: 0, diameterBottom: 0.24, height: 0.26, tessellation: 12 },
+      { diameterTop: 0, diameterBottom: 0.3, height: 0.3, tessellation: 14 },
       scene,
     );
-    tip.position.set(0, 0.2, -0.05);
-    tip.rotation.x = -0.35;
-    tip.material = cloakMat;
+    tip.position.set(0, 0.21, -0.07);
+    tip.rotation.x = -0.5;
+    tip.material = hoodMat;
     tip.parent = this.hoodGroup;
-    // Face: a soft dark opening in the hood, seen when walking toward the camera.
-    const face = MeshBuilder.CreateSphere('player.face', { diameter: 0.3, segments: 10 }, scene);
-    face.scaling.set(1, 1.05, 0.45);
-    face.position.set(0, -0.02, 0.17);
+    // Face: a deep shadow in the hood opening, seen when walking toward the camera.
+    const face = MeshBuilder.CreateSphere('player.face', { diameter: 0.34, segments: 12 }, scene);
+    face.scaling.set(0.95, 0.9, 0.4);
+    face.position.set(0, -0.04, 0.2);
     face.material = umberMat;
     face.parent = this.hoodGroup;
 
-    // Scarf: a collar and a tail that trails behind and sways.
-    const collar = MeshBuilder.CreateTorus('player.collar', { diameter: 0.34, thickness: 0.09, tessellation: 18 }, scene);
-    collar.position.set(0, 0.74, 0);
-    collar.scaling.y = 0.8;
+    // Scarf: a thick wrap under the hood and a long tail that trails behind and sways.
+    const collar = MeshBuilder.CreateTorus('player.collar', { diameter: 0.4, thickness: 0.12, tessellation: 20 }, scene);
+    collar.position.set(0, 0.7, 0.01);
+    collar.scaling.y = 0.75;
     collar.material = scarfMat;
     collar.parent = this.body;
-    this.scarfTail = MeshBuilder.CreateBox('player.scarfTail', { width: 0.12, height: 0.34, depth: 0.03 }, scene);
-    this.scarfTail.setPivotPoint(new Vector3(0, 0.17, 0));
-    this.scarfTail.position.set(0.1, 0.56, -0.2);
+    this.scarfTail = MeshBuilder.CreateBox('player.scarfTail', { width: 0.13, height: 0.5, depth: 0.035 }, scene);
+    this.scarfTail.bakeTransformIntoVertices(Matrix.Translation(0, -0.25, 0));
+    this.scarfTail.position.set(0.12, 0.72, -0.2);
     this.scarfTail.material = scarfMat;
     this.scarfTail.parent = this.body;
 
     // Gold diamond on the back of the cloak, from the reference design.
     const emblem = MeshBuilder.CreatePolyhedron('player.emblem', { type: 1, size: 0.055 }, scene);
     emblem.scaling.set(0.7, 1.1, 0.25);
-    emblem.position.set(0, 0.46, -0.265);
+    emblem.position.set(0, 0.44, -0.3);
     emblem.material = goldMat;
     emblem.parent = this.body;
 
@@ -205,7 +209,7 @@ export class PlayerVisual implements IPlayerVisual {
     this.hoodGroup.rotation.z = -step * 0.04 * moving;
 
     // Scarf tail flutters more when walking.
-    this.scarfTail.rotation.x = -0.35 - this.sway * 3 + Math.sin(this.time * 7 + 1) * 0.12 * (0.3 + moving);
+    this.scarfTail.rotation.x = 0.25 + this.sway * 4 + Math.sin(this.time * 7 + 1) * 0.12 * (0.3 + moving);
     this.scarfTail.rotation.z = Math.sin(this.time * 3.3) * 0.12 + this.turnRate * 0.05;
 
     // Feet step forward and back, lifting a little.
@@ -219,9 +223,9 @@ export class PlayerVisual implements IPlayerVisual {
 
     // Glow while inhaling.
     const glow = Math.max(s.glow, 0);
-    for (const m of this.toonMats) m.glow = glow * 0.7;
+    for (const m of this.toonMats) m.glow = glow * 0.45;
     this.halo.isVisible = glow > 0.02;
-    setPaperColor(this.haloMat, new Color4(1, 1, 1, Math.min(0.85, glow)));
+    setPaperColor(this.haloMat, new Color4(1, 1, 1, Math.min(0.6, glow * 0.8)));
     const hs = 0.9 + glow * 0.5;
     this.halo.scaling.set(hs, hs, hs);
   }

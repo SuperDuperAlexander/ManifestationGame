@@ -8,7 +8,7 @@ import { Random } from '../core/Random';
  * Soft textures painted in code with a 2D canvas: glows, blob shadows, fog puffs.
  * Made once per scene and shared.
  */
-export type ProcTexName = 'dot' | 'halo' | 'aura' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank';
+export type ProcTexName = 'dot' | 'halo' | 'aura' | 'wing' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank';
 
 const cache = new WeakMap<Scene, Map<ProcTexName, DynamicTexture>>();
 
@@ -76,6 +76,28 @@ function paint(scene: Scene, name: ProcTexName): DynamicTexture {
         [0.55, 'rgba(240,206,140,0.22)'],
         [1, 'rgba(235,197,122,0)'],
       ]);
+      tex.update();
+      return tex;
+    }
+    case 'wing': {
+      // A soft fairy wing: a rounded leaf shape, pale gold to ivory, glowing edge.
+      const [tex, ctx] = make(scene, name, 128, 128);
+      ctx.save();
+      ctx.translate(10, 64);
+      ctx.rotate(-0.35);
+      const g = ctx.createLinearGradient(0, 0, 110, 0);
+      g.addColorStop(0, 'rgba(255,244,214,0.95)');
+      g.addColorStop(0.6, 'rgba(250,236,200,0.6)');
+      g.addColorStop(1, 'rgba(235,197,122,0.15)');
+      ctx.fillStyle = g;
+      ctx.shadowColor = 'rgba(255,236,190,0.9)';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(30, -46, 100, -46, 108, -8);
+      ctx.bezierCurveTo(100, 20, 40, 22, 0, 0);
+      ctx.fill();
+      ctx.restore();
       tex.update();
       return tex;
     }

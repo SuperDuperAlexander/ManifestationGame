@@ -7,6 +7,7 @@ import { createGroundRect } from './Ground';
 import { PaperCardSet, type CardInstance } from './PaperCard';
 import type { Walkability } from './Walkability';
 import type { FogField } from '../gameplay/FogField';
+import type { Companion } from '../companion/Companion';
 
 /**
  * Milestone 1 test scene: flat ground and placeholder props.
@@ -17,6 +18,7 @@ export async function buildGreybox(
   assets: AssetLoader,
   walk: Walkability,
   fogs: FogField,
+  companion: Companion,
 ): Promise<void> {
   const grass = await assets.acquire('textures/ground_grass', { wrap: true, anisotropy: 4 });
   const ground = createGroundRect('greybox.ground', scene, 0, 10, 140, 120, 0, 2);
@@ -44,4 +46,7 @@ export async function buildGreybox(
   await place('greybox/rock', 10, 1.4, 0.6);
   fogs.add({ id: 'test_worthy', x: 0, z: 9, text: "I'm not worthy", release: 'I am worthy', points: 10 });
   fogs.add({ id: 'test_angry', x: 9, z: 16, text: "I'm so angry", release: 'I choose peace', points: 10 });
+  companion.addHint({ id: 'test_worthy', x: 0, z: 9, line: 'hint', blockade: true });
+  companion.addHint({ id: 'test_angry', x: 9, z: 16, line: 'hint', blockade: true });
+  companion.addHint({ id: 'hint_tree', x: -12, z: 4, line: 'hintOak' });
 }

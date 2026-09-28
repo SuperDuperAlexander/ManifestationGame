@@ -202,3 +202,70 @@ body {
     bottom: calc(200px + env(safe-area-inset-bottom));
   }
 }
+
+/* Start screen: ivory paper, a small sun, the title in wide letters. */
+.start-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 38%, #fbf6e9 0%, #f4eedf 55%, #ebe2cc 100%);
+  color: var(--ink);
+  text-align: center;
+  pointer-events: auto;
+  transition: opacity 1.4s ease;
+}
+.start-screen.gone {
+  opacity: 0;
+  pointer-events: none;
+}
+.ss-sun {
+  width: 84px;
+  height: 42px;
+  border-radius: 84px 84px 0 0;
+  background: linear-gradient(180deg, #f6dc9f, #ebc57a);
+  box-shadow: 0 0 40px rgba(235, 197, 122, 0.55);
+  margin-bottom: 26px;
+  position: relative;
+}
+.ss-sun::after {
+  content: '';
+  position: absolute;
+  left: -60px;
+  right: -60px;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c9ac74, transparent);
+}
+.ss-title {
+  margin: 0;
+  font-weight: 400;
+  font-size: clamp(34px, 7vw, 64px);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  padding-left: 0.32em;
+  color: #5b5a58;
+}
+.ss-sub {
+  margin: 14px 0 0;
+  font-size: clamp(11px, 2.4vw, 14px);
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: #a39e94;
+}
+.ss-prompt {
+  margin: 64px 0 0;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: #8a8578;
+  opacity: 0;
+}
+.start-screen.ready .ss-prompt {
+  animation: ss-breathe 4s ease-in-out infinite;
+}
+@keyframes ss-breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
