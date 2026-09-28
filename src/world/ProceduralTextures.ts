@@ -8,7 +8,7 @@ import { Random } from '../core/Random';
  * Soft textures painted in code with a 2D canvas: glows, blob shadows, fog puffs.
  * Made once per scene and shared.
  */
-export type ProcTexName = 'dot' | 'halo' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank';
+export type ProcTexName = 'dot' | 'halo' | 'aura' | 'shadow' | 'ring' | 'puff' | 'cliff' | 'mist' | 'plank';
 
 const cache = new WeakMap<Scene, Map<ProcTexName, DynamicTexture>>();
 
@@ -67,6 +67,18 @@ function paint(scene: Scene, name: ProcTexName): DynamicTexture {
       tex.update();
       return tex;
     }
+    case 'aura': {
+      // Glow around a figure: soft, with a calm centre so the figure stays readable.
+      const [tex, ctx] = make(scene, name, 128, 128);
+      radial(ctx, 64, 64, 64, [
+        [0, 'rgba(255,240,205,0.1)'],
+        [0.3, 'rgba(255,236,190,0.4)'],
+        [0.55, 'rgba(240,206,140,0.22)'],
+        [1, 'rgba(235,197,122,0)'],
+      ]);
+      tex.update();
+      return tex;
+    }
     case 'shadow': {
       // Soft blob shadow. Warm dark olive, never black.
       const [tex, ctx] = make(scene, name, 128, 128);
@@ -83,9 +95,10 @@ function paint(scene: Scene, name: ProcTexName): DynamicTexture {
       const [tex, ctx] = make(scene, name, 256, 256);
       const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
       g.addColorStop(0, 'rgba(255,240,200,0)');
-      g.addColorStop(0.62, 'rgba(255,240,200,0.05)');
-      g.addColorStop(0.84, 'rgba(255,238,190,0.85)');
-      g.addColorStop(0.9, 'rgba(255,230,170,0.5)');
+      g.addColorStop(0.55, 'rgba(255,240,200,0.06)');
+      g.addColorStop(0.86, 'rgba(255,238,190,0.2)');
+      g.addColorStop(0.92, 'rgba(255,242,205,0.9)');
+      g.addColorStop(0.96, 'rgba(255,230,170,0.35)');
       g.addColorStop(1, 'rgba(255,230,170,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 256, 256);

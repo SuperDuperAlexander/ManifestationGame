@@ -101,8 +101,8 @@ export const TUNING = {
     lightBase: 0.6,
     rhythmBonus: 0.6,
     /** Player's light radius: base, plus this much at full breath. */
-    lightRadiusBase: 2.2,
-    lightRadiusGain: 5.5,
+    lightRadiusBase: 1.6,
+    lightRadiusGain: 3.6,
     /** Exhaled light reaches fog within this distance. */
     reach: 7.5,
   },

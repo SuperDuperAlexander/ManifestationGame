@@ -11,6 +11,9 @@ import { PlayerVisual } from '../player/PlayerVisual';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { WORLD_UNIFORMS } from '../shaders/paperShader';
 import { buildGreybox } from '../world/Greybox';
+import { BreathSystem } from '../player/BreathSystem';
+import { BreathVisuals } from '../player/BreathVisuals';
+import { BreathGuide } from '../ui/BreathGuide';
 
 /**
  * Owns the engine, the scene and every system. One frame = one call to `frame()`.
@@ -25,6 +28,11 @@ export class Game {
   readonly player: PlayerController;
   readonly playerVisual: PlayerVisual;
   readonly debug: DebugOverlay;
+  readonly breath = new BreathSystem();
+  readonly breathVisuals: BreathVisuals;
+  readonly breathGuide: BreathGuide;
+  /** True on touch devices: letting go of the breath button breathes out. */
+  touchMode = false;
   private time = 0;
 
   constructor(
@@ -49,6 +57,8 @@ export class Game {
     this.player = new PlayerController(this.input, this.walk);
     this.playerVisual = new PlayerVisual(this.scene);
     this.debug = new DebugOverlay(this.scene, ui);
+    this.breathVisuals = new BreathVisuals(this.scene);
+    this.breathGuide = new BreathGuide(ui);
     this.input.attach();
 
     window.addEventListener('resize', () => {
@@ -71,21 +81,37 @@ export class Game {
     this.input.update();
     if (this.input.debugTogglePressed) this.debug.toggle();
 
+    this.breath.update(dt, {
+      inhale: this.input.inhaleHeld,
+      exhale: this.input.exhaleHeld,
+      releaseExhales: this.touchMode,
+    });
+    // Breathing slows the walk: a calm pace to go with the breath.
+    this.player.speedFactor = this.breath.state === 'idle' ? 1 : 0.7;
     this.player.update(dt);
+    this.breathVisuals.update(dt, this.breath, this.player.position);
+    WORLD_UNIFORMS.revealX = this.player.position.x;
+    WORLD_UNIFORMS.revealZ = this.player.position.z;
+    WORLD_UNIFORMS.revealRadius = this.breath.lightRadius;
+
     this.playerVisual.root.position.copyFrom(this.player.position);
     this.playerVisual.update(dt, {
       speed: this.player.speed,
       speedRatio: this.player.speedRatio,
       heading: this.player.heading,
-      breathLevel: 0,
-      glow: 0,
+      breathLevel: this.breath.breathLevel,
+      glow: this.breathVisuals.glow,
       awake: 1,
     });
+    this.breathGuide.update(dt, this.breath);
     this.rig.update(dt, this.player.position);
 
     this.debug.extra = {
       player: `${this.player.position.x.toFixed(1)}, ${this.player.position.z.toFixed(1)}`,
       horizon: this.rig.horizonFromTop.toFixed(2),
+      breath: `${this.breath.state} ${this.breath.breathLevel.toFixed(2)}`,
+      rhythm: this.breath.rhythmScore.toFixed(2),
+      breaths: this.breath.breaths,
     };
     this.debug.update(dt);
     this.scene.render();

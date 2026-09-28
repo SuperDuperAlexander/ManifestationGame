@@ -3,6 +3,7 @@ import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
+import { Constants } from '@babylonjs/core/Engines/constants';
 import type { Scene } from '@babylonjs/core/scene';
 import { PALETTE, SHADES, color3 } from '../config/palette';
 import { createToonMaterial, type ToonMaterial } from '../shaders/toonShader';
@@ -145,11 +146,13 @@ export class PlayerVisual implements IPlayerVisual {
 
     // Warm halo around the figure. Visible while inhaling.
     this.haloMat = createPaperMaterial('player.haloMat', scene, {
-      texture: procTexture(scene, 'halo'),
+      texture: procTexture(scene, 'aura'),
       additive: true,
       haze: false,
     });
-    this.halo = MeshBuilder.CreatePlane('player.halo', { size: 3.2 }, scene);
+    // Light is not hidden by the ground it stands on.
+    this.haloMat.depthFunction = Constants.ALWAYS;
+    this.halo = MeshBuilder.CreatePlane('player.halo', { size: 2.6 }, scene);
     this.halo.position.set(0, 0.6, 0);
     this.halo.billboardMode = TransformNode.BILLBOARDMODE_ALL;
     this.halo.material = this.haloMat;
@@ -218,8 +221,8 @@ export class PlayerVisual implements IPlayerVisual {
     const glow = Math.max(s.glow, 0);
     for (const m of this.toonMats) m.glow = glow * 0.7;
     this.halo.isVisible = glow > 0.02;
-    setPaperColor(this.haloMat, new Color4(1, 1, 1, Math.min(1, glow * 1.1)));
-    const hs = 0.8 + glow * 0.6;
+    setPaperColor(this.haloMat, new Color4(1, 1, 1, Math.min(0.85, glow)));
+    const hs = 0.9 + glow * 0.5;
     this.halo.scaling.set(hs, hs, hs);
   }
 
