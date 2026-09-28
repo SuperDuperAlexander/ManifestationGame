@@ -33,6 +33,13 @@ export class Companion {
   private releaseCount = 0;
   private readonly playerPos = new Vector3();
   private cooldown = 0;
+  /** After teaching: waiting for the player to try force first. */
+  private waitingForPush = false;
+  private waitTime = 0;
+  /** Where the player should go next (null = nowhere). Set by the game. */
+  goal: () => Vector3 | null = () => null;
+  private bestGoalDistance = Infinity;
+  private lingering = 0;
 
   constructor(
     private readonly fairy: Fairy,
@@ -44,7 +51,20 @@ export class Companion {
     events.on('fogMet', (e) => this.onFogMet(e.id, e.x, e.z));
     events.on('fogPushed', () => {
       this.fairy.pulse();
+      if (this.waitingForPush) {
+        // The lesson: force made it grow. Now she shows breathing.
+        this.waitingForPush = false;
+        void this.queue(async () => {
+          await this.dialogue.say('firstPush', { interrupt: true });
+          await this.sayBreathing();
+        });
+        return;
+      }
       void this.dialogue.say('force', { interrupt: true });
+    });
+    events.on('fogBreathed', () => {
+      // Found breathing without trying force: no need to wait for a push.
+      this.waitingForPush = false;
     });
     events.on('blockadeReleased', () => {
       this.fairy.pulse();
@@ -126,27 +146,41 @@ export class Companion {
     if (!this.taught) this.teach(id, x, z);
   }
 
-  /** First blockade: she flies to it and teaches breathing. */
+  /** First blockade: she flies to it and asks the player to try pushing it away first. */
   private teach(id: string, x: number, z: number): void {
     const point = new Vector3(x, 2.9, z - 0.8);
-    {
-      this.taught = true;
-      this.shownHints.add(id);
-      void this.queue(async () => {
-        await withTimeout(this.fairy.visit(point), 4);
-        this.sound.chime();
-        await this.dialogue.say('firstBlockade');
-        await this.dialogue.say('breathingTip');
-        this.fairy.comeBack();
-        await this.dialogue.say(this.touch() ? 'breathingKeysTouch' : 'breathingKeys');
-      });
-    }
+    this.taught = true;
+    this.shownHints.add(id);
+    void this.queue(async () => {
+      await withTimeout(this.fairy.visit(point), 4);
+      this.sound.chime();
+      await this.dialogue.say('firstBlockade');
+      this.fairy.comeBack();
+      // From here on a push is the lesson, even while she is still speaking.
+      this.waitingForPush = true;
+      this.waitTime = 0;
+      await this.dialogue.say(this.touch() ? 'pushKeysTouch' : 'pushKeys');
+    });
+  }
+
+  /** How breathing works. */
+  private async sayBreathing(): Promise<void> {
+    await this.dialogue.say('breathingTip');
+    await this.dialogue.say(this.touch() ? 'breathingKeysTouch' : 'breathingKeys');
   }
 
   update(dt: number, playerPos: Vector3): void {
     this.playerPos.copyFrom(playerPos);
     this.fairy.update(dt, playerPos);
     this.cooldown = Math.max(0, this.cooldown - dt);
+    if (this.waitingForPush) {
+      this.waitTime += dt;
+      if (this.waitTime > TUNING.guide.idleTime && !this.busy && !this.dialogue.busy) {
+        this.waitingForPush = false;
+        void this.queue(() => this.sayBreathing());
+      }
+    }
+    this.updateGuide(dt, playerPos);
     if (!this.introDone || this.busy || this.dialogue.busy || this.cooldown > 0) return;
 
     // Hints: the nearest unseen hint in range calls her.
@@ -169,6 +203,39 @@ export class Companion {
       this.shownHints.add(best.id);
       void this.showSomething(new Vector3(best.x, best.y ?? 2.4, best.z), best.line, [], best.radius ?? TUNING.fairy.hintRange);
     }
+  }
+
+  /**
+   * When the player lingers without getting closer to the goal, she flies a little way
+   * toward it, says "This way." and comes back.
+   */
+  private updateGuide(dt: number, playerPos: Vector3): void {
+    const goal = this.goal();
+    if (!goal || !this.introDone || this.waitingForPush) {
+      this.lingering = 0;
+      this.bestGoalDistance = Infinity;
+      return;
+    }
+    const d = Math.hypot(goal.x - playerPos.x, goal.z - playerPos.z);
+    if (d < this.bestGoalDistance - 1.5) {
+      this.bestGoalDistance = d;
+      this.lingering = 0;
+    } else {
+      this.lingering += dt;
+    }
+    const g = TUNING.guide;
+    if (this.lingering < g.idleTime || d < g.minDistance || this.busy || this.dialogue.busy) return;
+    this.lingering = 0;
+    this.bestGoalDistance = d;
+    const k = Math.min(1, 7 / d);
+    const point = new Vector3(playerPos.x + (goal.x - playerPos.x) * k, 2.2, playerPos.z + (goal.z - playerPos.z) * k);
+    void this.queue(async () => {
+      await withTimeout(this.fairy.visit(point), 4);
+      this.sound.chime();
+      await this.dialogue.say('guide');
+      await wait(0.6);
+      this.fairy.comeBack();
+    });
   }
 }
 

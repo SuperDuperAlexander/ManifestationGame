@@ -2,6 +2,7 @@ import { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import { Effect } from '@babylonjs/core/Materials/effect';
 import type { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
+import { WORLD_UNIFORMS } from './paperShader';
 
 /**
  * Flat, soft toon shading for the code-made 3D figures (player).
@@ -34,6 +35,7 @@ precision highp float;
 uniform vec3 uColor;
 uniform vec3 uShadow;
 uniform float uGlow;
+uniform vec4 uMood;
 varying vec3 vNormal;
 #ifdef VERTEXCOLOR
 varying vec3 vColor;
@@ -51,6 +53,8 @@ void main(void) {
 #endif
   // Gentle warm rim on the right edge.
   c += vec3(0.06, 0.04, 0.0) * smoothstep(0.5, 1.0, ndl);
+  // The figure only takes the darkness of the mood: it carries its own light.
+  c = mix(c, c * vec3(0.45, 0.48, 0.62), uMood.w * 0.8);
   c = mix(c, vec3(1.0, 0.93, 0.74), uGlow * 0.55);
   gl_FragColor = vec4(c, 1.0);
 }
@@ -68,7 +72,7 @@ export function createToonMaterial(name: string, scene: Scene, color: Color3, sh
     { vertex: 'toon', fragment: 'toon' },
     {
       attributes: ['position', 'normal'],
-      uniforms: ['world', 'viewProjection', 'uColor', 'uShadow', 'uGlow'],
+      uniforms: ['world', 'viewProjection', 'uColor', 'uShadow', 'uGlow', 'uMood'],
     },
   ) as ToonMaterial;
   mat.glow = 0;
@@ -79,6 +83,8 @@ export function createToonMaterial(name: string, scene: Scene, color: Color3, sh
     const effect = mat.getEffect();
     if (!effect) return;
     effect.setFloat('uGlow', mat.glow);
+    const m = WORLD_UNIFORMS.mood;
+    effect.setFloat4('uMood', m[0], m[1], m[2], m[3]);
   });
   return mat;
 }

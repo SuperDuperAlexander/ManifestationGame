@@ -28,7 +28,18 @@ export const WORLD_UNIFORMS = {
   /** Paper cards between the camera and this point (the player) turn see-through there. */
   see: [0, 0, 0] as [number, number, number],
   camera: [0, 0, 0] as [number, number, number],
+  /** World mood: brightness, colour strength, warm lift, darkness (see WorldMood). */
+  mood: [1, 1, 0, 0] as [number, number, number, number],
 };
+
+/** GLSL that applies the world mood to a colour `c` (uniform vec4 uMood). */
+export const MOOD_GLSL = /* glsl */ `
+  float moodGrey = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+  c.rgb = mix(vec3(moodGrey), c.rgb, uMood.y);
+  c.rgb *= uMood.x;
+  c.rgb += uMood.z * vec3(0.05, 0.035, 0.0);
+  c.rgb = mix(c.rgb, c.rgb * vec3(0.4, 0.43, 0.58), uMood.w);
+`;
 
 const VERTEX = /* glsl */ `
 precision highp float;
@@ -83,6 +94,7 @@ uniform float uTime;
 uniform vec4 uLayer;
 uniform vec4 uSee;
 uniform vec4 uCamPos;
+uniform vec4 uMood;
 varying vec2 vUv;
 varying vec2 vLocal;
 varying vec3 vWorld;
@@ -160,9 +172,12 @@ void main(void) {
   c.rgb = mix(c.rgb, vec3(lum), uLayer.x * 0.35);
   c.rgb = mix(c.rgb, uLayer.yzw, uLayer.x);
 #endif
+#ifndef NOMOOD
+MOOD_PLACEHOLDER
+#endif
   gl_FragColor = c;
 }
-`;
+`.replace('MOOD_PLACEHOLDER', MOOD_GLSL);
 
 Effect.ShadersStore['paperVertexShader'] = VERTEX;
 Effect.ShadersStore['paperFragmentShader'] = FRAGMENT;
@@ -211,6 +226,8 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
   if (opts.layerHaze) defines.push('LAYERHAZE');
   if (opts.vertexShade) defines.push('VSHADE');
   if (opts.seeThrough) defines.push('SEETHROUGH');
+  // Light itself (glows, beams, the bridge) keeps its brightness whatever the mood.
+  if (opts.additive) defines.push('NOMOOD');
 
   const blend = !!(opts.alphaBlend || opts.additive);
   const mat = new ShaderMaterial(
@@ -233,6 +250,7 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
         'uLayer',
         'uSee',
         'uCamPos',
+        'uMood',
       ],
       samplers: ['uTex'],
       defines,
@@ -267,6 +285,7 @@ export function createPaperMaterial(name: string, scene: Scene, opts: PaperMater
     effect.setDirectColor4('uHazeColor', u.hazeColor);
     effect.setFloat4('uReveal', u.revealX, u.revealZ, u.revealRadius, 0);
     effect.setFloat('uTime', u.time);
+    effect.setFloat4('uMood', u.mood[0], u.mood[1], u.mood[2], u.mood[3]);
     if (opts.seeThrough) {
       effect.setFloat4('uSee', u.see[0], u.see[1], u.see[2], TUNING.cards.seeThroughRadius);
       effect.setFloat4('uCamPos', u.camera[0], u.camera[1], u.camera[2], 0);

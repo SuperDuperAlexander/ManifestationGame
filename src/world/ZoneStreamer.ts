@@ -387,10 +387,21 @@ export class ZoneStreamer {
     // Fog blockades and fog walls. Released fogs stay gone.
     for (const b of zone.blockades) {
       if (this.fogs.isReleased(b.id)) continue;
-      const fog = this.fogs.add({ id: b.id, x: b.x, z: b.z, text: b.text, release: b.release, points: b.points });
+      const fog = this.fogs.add({
+        id: b.id,
+        x: b.x,
+        z: b.z,
+        text: b.text,
+        release: b.release,
+        points: b.points,
+        size: b.size,
+        stretch: b.stretch,
+      });
       if (fog) {
         entry.fogIds.push(b.id);
-        this.addPart(entry, { minX: b.x - 4, maxX: b.x + 4, minZ: b.z - 2.5, maxZ: b.z + 2.5, top: 4 }, (v) => fog.setVisible(v));
+        // Room for the cloud growing when pushed.
+        const r = 4 * (b.size ?? 1) * (b.stretch ?? 1) * (1 + TUNING.fog.growMax);
+        this.addPart(entry, { minX: b.x - r, maxX: b.x + r, minZ: b.z - r, maxZ: b.z + r, top: 6 }, (v) => fog.setVisible(v));
       }
     }
     for (const f of zone.fogWalls) {

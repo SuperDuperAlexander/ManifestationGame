@@ -2,38 +2,36 @@
   "intro": [
     "Hello, little light. I'll walk this path with you.",
     "This valley is full of fog. Some of it lives inside us.",
-    "Walk with me. The clearing is just ahead."
+    "Follow the path through the valley, all the way to the chasm."
   ],
   "controlsMove": "Use W A S D or the arrow keys to walk.",
   "controlsMoveTouch": "Drag on the left side to walk.",
   "firstBlockade": [
-    "Look. This fog carries a heavy thought.",
-    "Force doesn't help here. Breathe."
+    "Look. A blockade is blocking the path.",
+    "Try to push it away first."
+  ],
+  "pushKeys": "Press E to push.",
+  "pushKeysTouch": "Tap near the fog to push.",
+  "firstPush": [
+    "See? Force only makes it grow.",
+    "Let's try another way."
   ],
   "breathingTip": "Breathe in… let your light grow. Breathe out… let it flow.",
   "breathingKeys": "Hold Space to breathe in. Hold Shift to breathe out.",
   "breathingKeysTouch": "Hold the light button to breathe in. Let go to breathe out.",
   "force": "Force doesn't help here. Breathe.",
+  "secondBlockade": "Another blockade. You know the way now: breathe.",
   "released": [
-    "There it goes. Light again.",
-    "Softly. That is how it works.",
-    "You were never that thought.",
-    "It was only fog.",
-    "Lighter now, isn't it?",
-    "One more fog became light."
+    "Feel that? The valley is a little brighter now.",
+    "The path is free. Your light is shining. Let's go to the chasm."
   ],
+  "guide": "This way. Follow the path.",
   "hint": "Something is waiting over there.",
-  "hintStart": "Look, the path opens to the clearing.",
-  "hintWell": "The old well remembers every wish. Rest here a moment.",
-  "hintOak": "This oak has seen many travellers. It saw them find their way.",
-  "hintForest": "Two fogs live in this forest. Take your time.",
-  "hintRuins": "Old stones, old fears. Breathe slowly here.",
+  "hintPath": "The path winds through the whole valley. I'll stay close.",
   "hintRiver": "Listen to the water. It never forces its way.",
-  "hintFord": "The stones will carry you across.",
-  "hintHiddenPath": "Breathe in while you walk. Your light shows hidden paths.",
-  "hintMonolith": "The rune glows for those who breathe.",
-  "hintChasmEarly": "A bridge of light could cross here. Every fog you release becomes a plank.",
-  "hintChasm": "Something is waiting over there.",
+  "hintPass": "The path climbs between the hills now.",
+  "hintChasmEarly": "A bridge of light could cross here. Every fog you release becomes light.",
+  "hintChasm": "The chasm. Your light will carry you across.",
   "bridge": "Every fog you released became light. Look.",
   "bridgeMore": "Almost. The bridge needs a little more light.",
   "bridgeReady": "The bridge is ready. Walk across. I'm with you.",

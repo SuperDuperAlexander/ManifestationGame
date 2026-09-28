@@ -108,14 +108,19 @@ export const TUNING = {
   },
 
   fog: {
-    /** How much density one full, perfect exhale removes. */
-    densityPerLight: 0.42,
+    /** How much density one full exhale removes. About two calm breaths dissolve a fog. */
+    densityPerLight: 0.72,
     /** Push: density rises this much for a moment ... */
     pushSurge: 0.35,
     pushSurgeTime: 1.0,
     /** ... and this much stays. Force makes it stronger. */
     pushPermanent: 0.04,
-    maxDensity: 1.25,
+    maxDensity: 1.2,
+    /** Each push makes the cloud this much bigger (share of its size), up to growMax. */
+    pushGrow: 0.22,
+    growMax: 0.8,
+    /** Received light shrinks the growth again: growth lost per unit of light. */
+    growPerLight: 0.5,
     /** The fog is soft but you cannot walk through it. */
     colliderRadius: 1.9,
     /** Walking into it counts as a push when the body is closer than this to its edge. */
@@ -143,6 +148,46 @@ export const TUNING = {
     /** Silence between two lines. */
     lineGap: 0.7,
     introDelay: 1.2,
+  },
+
+  /**
+   * The mood of the world: dim and pale at the start, brighter and warmer with every released
+   * blockade. Pushing a fog darkens everything; breathing brings the light back.
+   */
+  mood: {
+    /** Brightness and colour strength before any blockade is released. */
+    startBrightness: 0.8,
+    startSaturation: 0.62,
+    /** Warm golden lift once everything is released. */
+    endWarmth: 1,
+    /** How fast the mood moves to its new level after a release, per second. */
+    riseSpeed: 0.35,
+    /** Darkness from one push: a short flash, and a part that stays until you breathe. */
+    pushFlash: 0.6,
+    pushStay: 0.22,
+    stayMax: 0.66,
+    /** The flash fades in about this many seconds. */
+    flashTime: 2.2,
+    /** Darkness that stays, lost per unit of exhaled light, and slowly by itself per second. */
+    stayPerLight: 0.45,
+    stayDecay: 0.015,
+    /** Extra glow of the figure when everything is released (0..1). */
+    playerLight: 0.55,
+  },
+
+  /** The golden beam from the sky when a blockade dissolves. */
+  beam: {
+    duration: 4.2,
+    width: 3.2,
+    height: 34,
+  },
+
+  /** The fairy shows the way when the player lingers. */
+  guide: {
+    /** Seconds without getting closer to the goal before she shows the way. */
+    idleTime: 14,
+    /** She only guides when the goal is farther than this. */
+    minDistance: 9,
   },
 
   bridge: {

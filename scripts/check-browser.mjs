@@ -1,6 +1,6 @@
 // Opens the running game in a real browser, collects console errors and debug stats,
 // runs an optional scenario and saves screenshots.
-// Usage: node scripts/check-browser.mjs [url] [--out dir] [--scenario name] [--params skipintro|autostart] [--mobile] [--headed]
+// Usage: node scripts/check-browser.mjs [url] [--out dir] [--scenario name] [--params skipintro|autostart] [--mobile] [--headed] [--size 1280x720]
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -25,7 +25,10 @@ const browser = await chromium.launch({
 const context = await browser.newContext(
   mobile
     ? { viewport: { width: 412, height: 915 }, deviceScaleFactor: 2.6, isMobile: true, hasTouch: true }
-    : { viewport: { width: 1280, height: 720 }, deviceScaleFactor: Number(flag('--dpr', '1')) },
+    : {
+        viewport: { width: Number(flag('--size', '1280x720').split('x')[0]), height: Number(flag('--size', '1280x720').split('x')[1]) },
+        deviceScaleFactor: Number(flag('--dpr', '1')),
+      },
 );
 const page = await context.newPage();
 const problems = [];

@@ -34,6 +34,9 @@ import { Fairy } from '../companion/Fairy';
 import { Companion } from '../companion/Companion';
 import { StartScreen } from '../ui/StartScreen';
 import { clamp01 } from './Random';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { WorldMood } from '../gameplay/WorldMood';
+import { LightBeam } from '../gameplay/LightBeam';
 
 /** URL switches for testing: ?autostart skips the start screen, ?skipintro also skips wake-up and intro. */
 const PARAMS = new URLSearchParams(location.search);
@@ -77,6 +80,11 @@ export class Game {
   readonly transition: Transition;
   private blockadesReleased = 0;
   private complete = false;
+  mood: WorldMood | null = null;
+  private readonly beams: LightBeam[] = [];
+  /** A bright moment of the figure right after a release, 0..1. */
+  private releaseGlow = 0;
+  private readonly goalPoint = new Vector3();
   readonly performance: Performance;
   /** True on touch devices: letting go of the breath button breathes out. */
   touchMode = false;
@@ -123,9 +131,12 @@ export class Game {
     this.backdrop = new Backdrop(this.scene, this.rig, this.assets);
     this.events.on('zoneEntered', (e) => this.onZoneEntered(e.id));
     this.transition = new Transition(ui);
-    this.events.on('blockadeReleased', () => {
+    this.events.on('blockadeReleased', (e) => {
       this.blockadesReleased++;
-      this.bridge?.setEarned(this.blockadesReleased);
+      this.bridge?.setEarned(this.blockadesReleased * (this.chapter?.spec.bridge?.planksPerRelease ?? 1));
+      // Light from the sky onto the released spot; the figure lights up.
+      this.beams.push(new LightBeam(this.scene, e.x, e.z));
+      this.releaseGlow = 1;
     });
     this.events.on('plankAdded', (e) => {
       this.fairy.pulse();
@@ -161,8 +172,19 @@ export class Game {
     this.rig.ground = (x, z) => chapter.valley.sample(x, z);
     for (const zone of chapter.zones.values()) {
       for (const h of zone.hints) this.companion.addHint(h);
-      for (const b of zone.blockades) this.companion.addHint({ id: b.id, x: b.x, z: b.z, line: 'hint', blockade: true, y: 2.8 });
+      for (const b of zone.blockades) this.companion.addHint({ id: b.id, x: b.x, z: b.z, line: b.hint, blockade: true, y: 2.8 });
     }
+    const blockades = [...chapter.zones.values()].flatMap((z) => z.blockades);
+    this.mood = new WorldMood(this.events, blockades.length);
+    // The fairy's goal: the next fog on the way, then the bridge, then the gate.
+    this.companion.goal = () => {
+      const next = blockades.find((b) => !this.fogs.isReleased(b.id));
+      if (next) return this.goalPoint.set(next.x, 0, next.z);
+      const br = spec.bridge;
+      if (br && !this.bridge?.isWalkable) return this.goalPoint.set(br.from[0], 0, br.from[1]);
+      const gate = spec.gate;
+      return gate && !this.complete ? this.goalPoint.set(gate.exit[0], 0, gate.exit[1]) : null;
+    };
     const xs = [...chapter.zones.values()].flatMap((z) => [z.bounds.minX, z.bounds.maxX]);
     this.backdrop.centreX = (Math.min(...xs) + Math.max(...xs)) / 2;
     this.player.teleport(chapter.start.x, chapter.start.z);
@@ -234,8 +256,9 @@ export class Game {
     // At the bridge zone the fairy explains the bridge once, depending on how much light there is.
     const bridge = this.chapter.spec.bridge;
     if (bridge && zoneId === bridge.zone && this.bridge && !this.bridge.isWalkable) {
-      if (this.blockadesReleased === 0) void this.companion.say('hintChasmEarly', { once: true });
-      else if (this.blockadesReleased < bridge.planksRequired) void this.companion.say('bridgeMore', { once: true });
+      const planks = this.blockadesReleased * (bridge.planksPerRelease ?? 1);
+      if (planks === 0) void this.companion.say('hintChasmEarly', { once: true });
+      else if (planks < bridge.planksRequired) void this.companion.say('bridgeMore', { once: true });
     }
   }
 
@@ -331,6 +354,12 @@ export class Game {
     this.fogs.update(dt, this.player, this.breath, this.input.pushPressed);
     this.breathVisuals.target = this.fogs.hasTarget ? this.fogs.streamTarget : null;
     this.breathVisuals.update(dt, this.breath, this.player.position);
+    this.mood?.update(dt, this.breath.lightThisFrame);
+    this.releaseGlow = Math.max(0, this.releaseGlow - dt / 3.5);
+    for (let i = this.beams.length - 1; i >= 0; i--) {
+      this.beams[i]!.update(dt);
+      if (this.beams[i]!.done) this.beams.splice(i, 1);
+    }
     this.breathGuide.wanted = this.fogs.nearestDistance < TUNING.breath.reach + 2;
     WORLD_UNIFORMS.revealX = this.player.position.x;
     WORLD_UNIFORMS.revealZ = this.player.position.z;
@@ -343,6 +372,7 @@ export class Game {
       heading: this.player.heading,
       breathLevel: this.breath.breathLevel,
       glow: this.breathVisuals.glow,
+      innerLight: clamp01((this.mood?.light ?? 0) * TUNING.mood.playerLight + this.releaseGlow * 0.7),
       awake: this.awake,
     });
     this.companion.update(dt, this.player.position);
@@ -360,6 +390,7 @@ export class Game {
       player: `${this.player.position.x.toFixed(1)}, ${this.player.position.z.toFixed(1)}`,
       zone: this.streamer?.current ?? '-',
       ridge: this.rig.horizonFromTop.toFixed(2),
+      mood: WORLD_UNIFORMS.mood.map((v) => v.toFixed(2)).join(' '),
       breath: `${this.breath.state} ${this.breath.breathLevel.toFixed(2)}`,
       rhythm: this.breath.rhythmScore.toFixed(2),
       breaths: this.breath.breaths,

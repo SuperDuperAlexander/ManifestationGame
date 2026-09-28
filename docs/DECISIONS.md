@@ -145,3 +145,34 @@ the ground mesh like the light in the art. Setting: `TUNING.ground.slopeShade`.
 **D32. Test switches:** `scripts/check-browser.mjs` can use an installed Chromium with
 `CHROMIUM_PATH=/path/to/chromium`. The `partial` scenario waits for game events instead of fixed
 times, so it also works on slow computers.
+
+## MVP level (Alexander's brief, 2026-09-28)
+
+**D33. Chapter 1 is a short MVP level** with one winding path from the meadow to the chasm and
+two fogs: "I'm not worthy" on the ford over the river, "I'm angry" in the pass between two hill ridges.
+The player can walk anywhere on the floor, but the river and the ridges leave only one way through,
+and each fog closes it. The larger chapter (6 fogs) comes back later. New valley option: `ridges`
+(extra hill lines inside the valley). Level: `public/data/chapters/ch1.json`.
+
+**D34. Two calm breaths dissolve a fog** (`TUNING.fog.densityPerLight` 0.72). 10 light points each.
+The bridge needs both: each release adds 3 planks (`planksPerRelease`), 6 are needed.
+
+**D35. The world mood** (`src/gameplay/WorldMood.ts`): the valley starts pale and a little dim
+(brightness 0.8, colour 0.62). Every release makes it brighter, more colourful and, at the end, warm.
+All world shaders read it. Settings: `TUNING.mood`.
+
+**D36. Force makes it worse, visibly.** Each push darkens the whole world (a dark flash, and a part
+that stays), and the fog grows bigger and darker (up to +80 %) and pushes the player back a little.
+Breathing out brings the light back and shrinks the fog again.
+
+**D37. The release:** a golden beam of light from the sky onto the fog, sparks falling down,
+a glow on the ground (`src/gameplay/LightBeam.ts`). The figure lights up, and keeps a soft inner
+light that grows with every release (`TUNING.mood.playerLight`).
+
+**D38. The fairy teaches force first.** At the first fog she says "Try to push it away first."
+After the first push: "See? Force only makes it grow." and then how to breathe. If the player does
+not push within 14 s, or finds breathing alone, she explains breathing anyway.
+
+**D39. The fairy shows the way.** When the player lingers for 14 s without getting closer to the next
+goal (next fog, then the bridge, then the gate), she flies a little way toward it: "This way. Follow the path."
+Settings: `TUNING.guide`.

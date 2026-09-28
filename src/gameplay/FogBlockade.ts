@@ -43,6 +43,10 @@ export class FogBlockade {
   state: FogState = 'solid';
   /** 1 = full. Pushing can raise it a little above 1. */
   density = 1;
+  /** Extra size from pushing (0 = normal). Breathing takes it away again. */
+  grow = 0;
+  /** How often it was pushed. */
+  pushes = 0;
   readonly collider: Circle;
   readonly position: Vector3;
   private readonly puffs: Mesh;
@@ -56,6 +60,8 @@ export class FogBlockade {
   private dissolveTime = 0;
   private burst: ParticleSystem | null = null;
   private shownDensity = 1;
+  private shownGrow = 0;
+  private readonly baseRadius: number;
 
   constructor(
     private readonly scene: Scene,
@@ -64,9 +70,12 @@ export class FogBlockade {
     const size = data.size ?? 1;
     const stretch = data.stretch ?? 1;
     this.position = new Vector3(data.x, 0, data.z);
-    this.collider = { x: data.x, z: data.z, r: TUNING.fog.colliderRadius * size, active: data.solid !== false };
+    this.baseRadius = TUNING.fog.colliderRadius * size;
+    this.collider = { x: data.x, z: data.z, r: this.baseRadius, active: data.solid !== false };
 
     this.mat = createFogMaterial(`fogMat:${data.id}`, scene, procTexture(scene, 'puff'));
+    this.mat.fog.cx = data.x;
+    this.mat.fog.cz = data.z;
     this.puffs = MeshBuilder.CreatePlane(`fog:${data.id}`, { size: 1 }, scene);
     this.puffs.material = this.mat;
     this.puffs.isPickable = false;
@@ -75,7 +84,8 @@ export class FogBlockade {
 
     // Puffs: a soft dome, wider than tall, back to front.
     const rnd = new Random(`fog:${data.id}`);
-    const count = Math.round(17 * Math.sqrt(size * stretch));
+    // Dense fog: many overlapping puffs.
+    const count = Math.round(24 * Math.sqrt(size * stretch));
     const lean = (TUNING.cards.leanBackDeg * Math.PI) / 180;
     const list: { x: number; y: number; z: number; s: number; tint: number[] }[] = [];
     for (let i = 0; i < count; i++) {
@@ -144,13 +154,16 @@ export class FogBlockade {
     this.surge = 1;
     this.wobble = 1;
     this.flicker = 1;
+    this.pushes++;
     this.density = Math.min(TUNING.fog.maxDensity, this.density + TUNING.fog.pushPermanent);
+    this.grow = Math.min(TUNING.fog.growMax, this.grow + TUNING.fog.pushGrow);
   }
 
   /** Exhaled light reaching the fog. Returns true when this light dissolved it. */
   receiveLight(light: number): boolean {
     if (this.state !== 'solid' || this.data.breathable === false) return false;
     this.density -= light * TUNING.fog.densityPerLight;
+    this.grow = Math.max(0, this.grow - light * TUNING.fog.growPerLight);
     if (this.density <= 0) {
       this.density = 0;
       this.startDissolve();
@@ -229,6 +242,10 @@ export class FogBlockade {
     this.mat.fog.density = this.state === 'solid' ? this.shownDensity + this.surge * 0.25 : 0;
     this.mat.fog.wobble = this.wobble;
     this.mat.fog.surge = this.surge;
+    this.shownGrow += (this.grow - this.shownGrow) * damp(3, dt);
+    this.mat.fog.grow = this.shownGrow;
+    // A grown fog also pushes the player back a little.
+    this.collider.r = this.baseRadius * (1 + this.shownGrow * 0.5);
 
     if (this.text && this.state === 'solid') {
       // Readable until the very end; flickers when pushed.

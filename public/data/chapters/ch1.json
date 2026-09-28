@@ -54,22 +54,23 @@
   "playerStart": {
     "zone": "meadow",
     "pos": [
-      -2,
+      -16,
       0,
-      -1
+      -4
     ]
   },
   "bridge": {
     "zone": "chasm",
-    "planksRequired": 5,
+    "planksRequired": 6,
     "planksTotal": 6,
+    "planksPerRelease": 3,
     "from": [
       0,
-      16
+      20
     ],
     "to": [
       0,
-      23
+      27
     ],
     "width": 2.8
   },
@@ -77,19 +78,19 @@
     "zone": "chasm",
     "pos": [
       0,
-      30
+      33.5
     ],
     "asset": "props/gate_portal",
     "height": 6.8,
     "fogPos": [
       0,
-      26.6
+      30.2
     ],
     "fogSize": 1.5,
     "fogStretch": 1.5,
     "exit": [
       0,
-      29.3
+      32.8
     ]
   },
   "assets": {
@@ -189,266 +190,316 @@
       "floors": [
         [
           [
-            -31,
-            -16
-          ],
-          [
-            -26,
-            -22
+            -22,
+            -18
           ],
           [
             -14,
-            -25
+            -23
           ],
           [
             0,
-            -26
+            -24
           ],
           [
             14,
-            -25
+            -23
           ],
           [
-            25,
-            -22
-          ],
-          [
-            31,
-            -15
-          ],
-          [
-            33,
-            -4
-          ],
-          [
-            32,
-            8
+            24,
+            -17
           ],
           [
             27,
-            14
+            -6
           ],
           [
-            22,
-            16
+            25,
+            4
           ],
           [
-            -14,
-            16
+            18,
+            9
           ],
           [
-            -24,
+            9,
+            10
+          ],
+          [
+            8.8,
+            13
+          ],
+          [
+            13,
             15
           ],
           [
-            -31,
-            8
+            12,
+            20
           ],
           [
-            -33,
-            -4
+            -12,
+            20
+          ],
+          [
+            -13,
+            15
+          ],
+          [
+            3.2,
+            13
+          ],
+          [
+            3,
+            10
+          ],
+          [
+            -18,
+            9
+          ],
+          [
+            -26,
+            4
+          ],
+          [
+            -27,
+            -6
           ]
         ],
         [
           [
-            -7,
-            23
-          ],
-          [
-            7,
-            23
-          ],
-          [
-            8,
+            -6,
             27
           ],
           [
             6,
-            32.5
-          ],
-          [
-            -6,
-            32.5
-          ],
-          [
-            -8,
             27
+          ],
+          [
+            7,
+            30.5
+          ],
+          [
+            5,
+            35.5
+          ],
+          [
+            -5,
+            35.5
+          ],
+          [
+            -7,
+            30.5
           ]
         ]
       ],
       "centre": [
         0,
-        -4
+        -2
       ],
       "rim": {
         "width": 11,
         "side": 7,
         "south": 2.2,
         "north": 3.2
-      }
+      },
+      "ridges": [
+        {
+          "points": [
+            [
+              -32,
+              11.5
+            ],
+            [
+              -12,
+              12.2
+            ],
+            [
+              1.5,
+              11.8
+            ]
+          ],
+          "height": 3.4,
+          "width": 3.8
+        },
+        {
+          "points": [
+            [
+              10.5,
+              11.8
+            ],
+            [
+              20,
+              11.5
+            ],
+            [
+              32,
+              11
+            ]
+          ],
+          "height": 3.4,
+          "width": 3.8
+        }
+      ]
     },
     "paths": [
       {
         "texture": "textures/ground_path",
+        "width": 2.6,
         "points": [
           [
-            -26,
-            -16
+            -16,
+            -19.5
           ],
           [
-            -19,
-            -14.5
-          ],
-          [
-            -12,
-            -13
+            -11,
+            -17
           ],
           [
             -5,
-            -12
-          ]
-        ],
-        "width": 3.0
-      },
-      {
-        "texture": "textures/ground_path",
-        "points": [
-          [
-            -4,
-            -9
+            -19
           ],
           [
-            -9,
+            1,
+            -17.5
+          ],
+          [
+            5,
+            -14
+          ],
+          [
+            3.5,
+            -10.5
+          ],
+          [
+            5,
+            -7.5
+          ],
+          [
+            6,
             -5
           ],
           [
-            -14,
-            -1.5
+            6.5,
+            -2.5
           ],
           [
-            -18,
-            0.5
-          ]
-        ],
-        "width": 2.8
-      },
-      {
-        "texture": "textures/ground_path",
-        "points": [
-          [
-            0.5,
-            -8
-          ],
-          [
-            0,
-            -4
-          ],
-          [
-            0,
+            2,
             -0.5
-          ]
-        ],
-        "width": 3.0
-      },
-      {
-        "texture": "textures/ground_path",
-        "points": [
-          [
-            5,
-            -11
           ],
           [
-            10,
-            -8.5
+            -5,
+            0
           ],
           [
-            15,
-            -5.2
+            -11,
+            1.5
           ],
           [
-            20,
-            -4
+            -13,
+            4.5
           ],
           [
-            25,
-            -3
-          ]
-        ],
-        "width": 2.8
-      },
-      {
-        "texture": "textures/ground_path",
-        "points": [
+            -9,
+            7
+          ],
+          [
+            -2,
+            6.5
+          ],
+          [
+            4,
+            8
+          ],
+          [
+            6,
+            10
+          ],
+          [
+            6,
+            12.5
+          ],
+          [
+            4,
+            15
+          ],
+          [
+            1,
+            17.5
+          ],
           [
             0,
-            10.5
-          ],
-          [
-            0,
-            13
-          ],
-          [
-            0,
-            15.8
+            19.8
           ]
-        ],
-        "width": 3.0
+        ]
       }
     ],
     "water": [
       {
         "texture": "textures/ground_water",
+        "width": 4.2,
         "points": [
           [
-            21,
-            -26
+            -34,
+            -3
           ],
           [
-            19,
-            -17
+            -24,
+            -6
           ],
           [
-            21,
-            -8
+            -13,
+            -3.5
           ],
           [
-            19.5,
-            1
+            -3,
+            -6.5
           ],
           [
-            17,
-            9
+            6,
+            -5
           ],
           [
-            17,
-            16.6
+            15,
+            -7
+          ],
+          [
+            24,
+            -4.5
+          ],
+          [
+            34,
+            -7
           ]
-        ],
-        "width": 4.2
+        ]
       }
     ],
     "chasms": [
       {
         "rect": [
-          -14,
-          16,
-          22,
-          23
+          -12,
+          20,
+          12,
+          27
         ],
-        "depth": 10,
+        "depth": 14,
         "waterfalls": [
           {
-            "x": -8,
-            "width": 3.6
+            "x": -7,
+            "width": 3.4
+          },
+          {
+            "x": 8,
+            "width": 2.2
           }
         ]
       }
     ],
     "passages": [
       [
-        20.3,
-        -4,
-        2.4
+        6,
+        -5,
+        2.6
       ]
     ]
   },
@@ -456,218 +507,261 @@
     {
       "id": "meadow",
       "origin": [
-        -20,
-        -14
+        0,
+        -16
       ],
       "areas": [
         [
-          -14,
-          -13,
-          12,
+          -28,
+          -10,
+          28,
           9
         ]
       ],
       "neighbours": [
-        "clearing",
-        "forest",
-        "ruins",
         "river",
+        "pass",
         "chasm"
       ],
       "props": [
         {
           "asset": "props/tree_round",
           "pos": [
-            -9,
+            -24,
             0,
-            6
+            4
           ],
           "scale": 5.2
         },
         {
           "asset": "props/tree_round",
           "pos": [
-            -7.5,
+            -22,
             0,
-            -5.5
+            -5
           ],
           "scale": 5.0
         },
         {
           "asset": "props/tree_round",
           "pos": [
-            2,
+            22,
             0,
-            8.5
+            4
           ],
-          "scale": 4.8
+          "scale": 5.4
         },
         {
           "asset": "props/tree_round",
           "pos": [
-            -17.5,
+            19,
             0,
-            3
+            -4
+          ],
+          "scale": 5.0
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            -31,
+            0,
+            8
           ],
           "scale": 6.0
         },
         {
           "asset": "props/tree_round",
           "pos": [
-            -18,
+            -30,
             0,
-            13
+            -1
           ],
-          "scale": 6.2
+          "scale": 5.8
         },
         {
           "asset": "props/tree_round",
           "pos": [
-            -15,
+            31,
             0,
-            -7
+            6
+          ],
+          "scale": 6.0
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            30,
+            0,
+            -3
           ],
           "scale": 5.6
         },
         {
           "asset": "props/tree_cypress",
           "pos": [
-            -13,
+            -9,
             0,
-            -1
+            4
+          ],
+          "scale": 5.2
+        },
+        {
+          "asset": "props/tree_cypress",
+          "pos": [
+            12,
+            0,
+            1
           ],
           "scale": 5.4
         },
         {
           "asset": "props/tree_cypress",
           "pos": [
-            -4,
+            15,
             0,
-            8
+            6.5
           ],
-          "scale": 5.2
+          "scale": 5.0
         },
         {
           "asset": "props/bush",
           "pos": [
-            -4,
+            -12,
             0,
-            -9.5
+            -6.5
           ],
           "scale": 1.2
         },
         {
           "asset": "props/bush",
           "pos": [
-            4,
+            -3,
             0,
-            -11
+            -6
           ],
           "scale": 1.1
         },
         {
           "asset": "props/bush",
           "pos": [
-            11,
+            8,
             0,
-            -11.5
+            -5
           ],
-          "scale": 1.0
+          "scale": 1.2
         },
         {
           "asset": "props/bush",
           "pos": [
-            -10.5,
+            -18,
             0,
-            2
+            6
           ],
           "scale": 1.3
         },
         {
           "asset": "props/bush",
           "pos": [
-            7,
+            20,
             0,
-            7
+            7.5
           ],
           "scale": 1.2
         },
         {
           "asset": "props/rock_large",
           "pos": [
-            -11,
+            -22,
             0,
-            10
+            1
           ],
-          "scale": 1.8
+          "scale": 1.7
+        },
+        {
+          "asset": "props/rock_large",
+          "pos": [
+            17,
+            0,
+            -1
+          ],
+          "scale": 1.6
         },
         {
           "asset": "props/rocks_small",
           "pos": [
-            5,
+            -7,
+            0,
+            1
+          ]
+        },
+        {
+          "asset": "props/rocks_small",
+          "pos": [
+            10,
+            0,
+            -3
+          ]
+        },
+        {
+          "asset": "props/rocks_small",
+          "pos": [
+            1,
             0,
             5
           ]
         },
         {
-          "asset": "props/rocks_small",
-          "pos": [
-            -6,
-            0,
-            2
-          ]
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            9,
-            0,
-            -5
-          ],
-          "scale": 0.8
-        },
-        {
           "asset": "props/flowers_white",
           "pos": [
+            -12,
             0,
-            0,
-            0
+            -2
           ],
-          "scatter": 18,
+          "scatter": 16,
           "radius": 7
         },
         {
           "asset": "props/flowers_white",
           "pos": [
-            -7,
+            8,
             0,
-            5
+            -1
           ],
-          "scatter": 8,
-          "radius": 3.5
+          "scatter": 10,
+          "radius": 6
         },
         {
           "asset": "props/grass_tuft",
           "pos": [
-            1,
             0,
-            1
+            0,
+            0
           ],
-          "scatter": 14,
-          "radius": 9
+          "scatter": 16,
+          "radius": 12
         }
       ],
       "blockades": [],
       "hints": [
         {
-          "id": "hint_start",
+          "id": "hint_path",
           "pos": [
-            7,
-            0,
-            2
+            -9,
+            2.4,
+            -1.5
           ],
-          "line": "hintStart",
-          "radius": 6
+          "line": "hintPath",
+          "radius": 4
+        },
+        {
+          "id": "hint_river",
+          "pos": [
+            0,
+            2.4,
+            7
+          ],
+          "line": "hintRiver",
+          "radius": 5
         }
       ],
       "ground": [],
@@ -683,802 +777,31 @@
       "fogWalls": []
     },
     {
-      "id": "clearing",
+      "id": "river",
       "origin": [
-        -0.5,
-        -13
+        0,
+        1
       ],
       "areas": [
         [
-          -7.5,
-          -14,
-          10.5,
+          -28,
+          -8,
+          28,
           9
         ]
       ],
       "neighbours": [
         "meadow",
-        "forest",
-        "ruins",
-        "river",
-        "chasm"
-      ],
-      "props": [
-        {
-          "asset": "props/tree_old_oak",
-          "pos": [
-            -4.0,
-            0,
-            5.5
-          ],
-          "scale": 7.4
-        },
-        {
-          "asset": "props/well",
-          "pos": [
-            3.5,
-            0,
-            0
-          ]
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            9.5,
-            0,
-            5.5
-          ],
-          "scale": 5.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -7.5,
-            0,
-            -8
-          ],
-          "scale": 4.6
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            -2.5,
-            0,
-            -11
-          ],
-          "scale": 1.2
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            6.0,
-            0,
-            -10
-          ],
-          "scale": 1.1
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            10.5,
-            0,
-            -4
-          ],
-          "scale": 1.3
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            9.0,
-            0,
-            8.5
-          ],
-          "scale": 1.2
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            -2.5,
-            0,
-            -15.5
-          ],
-          "scale": 1.4
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            5.5,
-            0,
-            -15
-          ],
-          "scale": 1.3
-        },
-        {
-          "asset": "props/rock_large",
-          "pos": [
-            8.5,
-            0,
-            -7.5
-          ],
-          "scale": 1.6
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            -7.0,
-            0,
-            -3
-          ]
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            7.0,
-            0,
-            2.5
-          ],
-          "scale": 0.8
-        },
-        {
-          "asset": "props/flowers_white",
-          "pos": [
-            1.5,
-            0,
-            -3
-          ],
-          "scatter": 12,
-          "radius": 8
-        },
-        {
-          "asset": "props/flowers_white",
-          "pos": [
-            6.5,
-            0,
-            0
-          ],
-          "scatter": 8,
-          "radius": 3
-        },
-        {
-          "asset": "props/grass_tuft",
-          "pos": [
-            0.5,
-            0,
-            -1
-          ],
-          "scatter": 12,
-          "radius": 10
-        }
-      ],
-      "blockades": [],
-      "hints": [
-        {
-          "id": "hint_oak",
-          "pos": [
-            -4.0,
-            5,
-            5.5
-          ],
-          "line": "hintOak",
-          "radius": 7
-        },
-        {
-          "id": "hint_well",
-          "pos": [
-            3.5,
-            2.4,
-            0
-          ],
-          "line": "hintWell",
-          "radius": 4.5
-        }
-      ],
-      "ground": [
-        {
-          "type": "plaza",
-          "texture": "textures/ground_stone",
-          "pos": [
-            1.0,
-            0.5
-          ],
-          "radius": [
-            6,
-            4.4
-          ]
-        }
-      ],
-      "hiddenPaths": [],
-      "events": [],
-      "passages": [],
-      "fogWalls": []
-    },
-    {
-      "id": "forest",
-      "origin": [
-        -22,
-        5
-      ],
-      "areas": [
-        [
-          -12,
-          -10,
-          12,
-          11
-        ]
-      ],
-      "neighbours": [
-        "meadow",
-        "clearing",
-        "ruins",
-        "river",
-        "chasm"
-      ],
-      "props": [
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -8,
-            0,
-            7
-          ],
-          "scale": 5.6
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -3.5,
-            0,
-            9
-          ],
-          "scale": 5.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            2,
-            0,
-            9.5
-          ],
-          "scale": 5.8
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -9,
-            0,
-            -1
-          ],
-          "scale": 5.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -8,
-            0,
-            -8
-          ],
-          "scale": 5.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -2,
-            0,
-            -6.5
-          ],
-          "scale": 4.4
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            9,
-            0,
-            8
-          ],
-          "scale": 5.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -15,
-            0,
-            1
-          ],
-          "scale": 6.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -14.5,
-            0,
-            9
-          ],
-          "scale": 6.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -7,
-            0,
-            14.5
-          ],
-          "scale": 6.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            1,
-            0,
-            15
-          ],
-          "scale": 6.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            6,
-            0,
-            14.5
-          ],
-          "scale": 5.8
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            -5,
-            0,
-            4
-          ],
-          "scale": 5.6
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            6.5,
-            0,
-            6.5
-          ],
-          "scale": 5.8
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            10,
-            0,
-            -1
-          ],
-          "scale": 5.2
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            -11.5,
-            0,
-            -11
-          ],
-          "scale": 5.0
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            -4,
-            0,
-            -9
-          ],
-          "scale": 1.3
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            8,
-            0,
-            -8
-          ],
-          "scale": 1.2
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            -7,
-            0,
-            2
-          ],
-          "scale": 1.3
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            9.5,
-            0,
-            4
-          ],
-          "scale": 1.2
-        },
-        {
-          "asset": "props/rock_large",
-          "pos": [
-            -10,
-            0,
-            -4.5
-          ],
-          "scale": 1.6
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            4,
-            0,
-            -0.5
-          ]
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            -1.5,
-            0,
-            6
-          ]
-        },
-        {
-          "asset": "props/grass_tuft",
-          "pos": [
-            1,
-            0,
-            0
-          ],
-          "scatter": 12,
-          "radius": 8
-        },
-        {
-          "asset": "props/flowers_white",
-          "pos": [
-            1,
-            0,
-            -1
-          ],
-          "scatter": 6,
-          "radius": 7
-        }
-      ],
-      "blockades": [
-        {
-          "id": "b_worthy",
-          "pos": [
-            -3,
-            -2
-          ],
-          "text": "I'm not worthy",
-          "release": "I am worthy",
-          "points": 10
-        },
-        {
-          "id": "b_angry",
-          "pos": [
-            2.5,
-            4.5
-          ],
-          "text": "I'm so angry",
-          "release": "I choose peace",
-          "points": 10
-        }
-      ],
-      "hints": [
-        {
-          "id": "hint_forest",
-          "pos": [
-            7,
-            3,
-            -7
-          ],
-          "line": "hintForest",
-          "radius": 6
-        },
-        {
-          "id": "hint_hidden",
-          "pos": [
-            4,
-            2,
-            -6
-          ],
-          "line": "hintHiddenPath",
-          "radius": 3.5
-        }
-      ],
-      "ground": [],
-      "hiddenPaths": [
-        {
-          "points": [
-            [
-              6,
-              -8
-            ],
-            [
-              3.5,
-              -6.5
-            ],
-            [
-              1,
-              -5
-            ],
-            [
-              -1,
-              -3.8
-            ]
-          ],
-          "spacing": 1.2
-        }
-      ],
-      "events": [],
-      "passages": [],
-      "fogWalls": []
-    },
-    {
-      "id": "ruins",
-      "origin": [
-        0,
-        3
-      ],
-      "areas": [
-        [
-          -10,
-          -7,
-          10,
-          7
-        ]
-      ],
-      "neighbours": [
-        "meadow",
-        "clearing",
-        "forest",
-        "river",
-        "chasm"
-      ],
-      "props": [
-        {
-          "asset": "props/ruin_arch",
-          "pos": [
-            0,
-            0,
-            6
-          ],
-          "scale": 4.6
-        },
-        {
-          "asset": "props/monolith_rune",
-          "pos": [
-            -5,
-            0,
-            2.5
-          ]
-        },
-        {
-          "asset": "props/ruin_pillar",
-          "pos": [
-            -8.5,
-            0,
-            3
-          ],
-          "scale": 3.6
-        },
-        {
-          "asset": "props/ruin_pillar",
-          "pos": [
-            7,
-            0,
-            2.5
-          ],
-          "scale": 3.2
-        },
-        {
-          "asset": "props/ruin_pillar",
-          "pos": [
-            -8.5,
-            0,
-            -4
-          ],
-          "scale": 3.0
-        },
-        {
-          "asset": "props/ruin_pillar",
-          "pos": [
-            8,
-            0,
-            -3.5
-          ],
-          "scale": 3.4
-        },
-        {
-          "asset": "props/ruin_pillar",
-          "pos": [
-            -4.5,
-            0,
-            7
-          ],
-          "scale": 3.0
-        },
-        {
-          "asset": "props/ruin_pillar",
-          "pos": [
-            5.5,
-            0,
-            6.5
-          ],
-          "scale": 2.8
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            -11,
-            0,
-            6.5
-          ],
-          "scale": 5.4
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            10.5,
-            0,
-            6
-          ],
-          "scale": 5.6
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            3,
-            0,
-            -5.5
-          ]
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            -5,
-            0,
-            -6
-          ]
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            9,
-            0,
-            0
-          ],
-          "scale": 0.8
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            -10,
-            0,
-            -1
-          ],
-          "scale": 1.3
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            10,
-            0,
-            -0.5
-          ],
-          "scale": 1.2
-        },
-        {
-          "asset": "props/grass_tuft",
-          "pos": [
-            0,
-            0,
-            0
-          ],
-          "scatter": 10,
-          "radius": 9
-        },
-        {
-          "asset": "props/flowers_white",
-          "pos": [
-            0,
-            0,
-            -1
-          ],
-          "scatter": 6,
-          "radius": 8
-        }
-      ],
-      "blockades": [
-        {
-          "id": "b_enough",
-          "pos": [
-            -5,
-            -1.5
-          ],
-          "text": "I'm not enough",
-          "release": "I am enough",
-          "points": 10
-        },
-        {
-          "id": "b_afraid",
-          "pos": [
-            4.5,
-            -0.5
-          ],
-          "text": "I'm afraid",
-          "release": "I am safe",
-          "points": 10
-        }
-      ],
-      "hints": [
-        {
-          "id": "hint_ruins",
-          "pos": [
-            0,
-            3,
-            -5
-          ],
-          "line": "hintRuins",
-          "radius": 5
-        },
-        {
-          "id": "hint_monolith",
-          "pos": [
-            -5,
-            3.8,
-            2.5
-          ],
-          "line": "hintMonolith",
-          "radius": 4.5
-        }
-      ],
-      "ground": [
-        {
-          "type": "plaza",
-          "texture": "textures/ground_stone",
-          "pos": [
-            0,
-            1
-          ],
-          "radius": [
-            8.5,
-            5.5
-          ],
-          "edge": 0.22
-        }
-      ],
-      "hiddenPaths": [],
-      "events": [],
-      "passages": [],
-      "fogWalls": []
-    },
-    {
-      "id": "river",
-      "origin": [
-        22,
-        -5
-      ],
-      "areas": [
-        [
-          -12,
-          -22,
-          12,
-          21
-        ]
-      ],
-      "neighbours": [
-        "meadow",
-        "clearing",
-        "forest",
-        "ruins",
+        "pass",
         "chasm"
       ],
       "props": [
         {
           "asset": "props/rocks_small",
           "pos": [
-            -2.7,
+            5.4,
             0,
-            0.6
+            -7.4
           ],
           "scale": 0.7,
           "collide": false
@@ -1486,9 +809,9 @@
         {
           "asset": "props/rocks_small",
           "pos": [
-            -1.5,
+            6.6,
             0,
-            1.4
+            -6
           ],
           "scale": 0.75,
           "collide": false
@@ -1496,125 +819,134 @@
         {
           "asset": "props/rocks_small",
           "pos": [
-            -0.4,
+            5.6,
             0,
-            0.7
+            -4.6
           ],
-          "scale": 0.6,
+          "scale": 0.65,
           "collide": false
         },
         {
           "asset": "props/tree_round",
           "pos": [
-            7,
+            -20,
             0,
-            -7
-          ],
-          "scale": 5.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            8,
-            0,
-            13
-          ],
-          "scale": 5.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -10,
-            0,
-            15.5
-          ],
-          "scale": 5.6
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -10.5,
-            0,
-            -14
-          ],
-          "scale": 5.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            15,
-            0,
-            -5
-          ],
-          "scale": 6.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            15,
-            0,
-            7
-          ],
-          "scale": 6.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            12.5,
-            0,
-            17.5
-          ],
-          "scale": 6.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            9.5,
-            0,
-            -17.5
+            1
           ],
           "scale": 5.4
         },
         {
           "asset": "props/tree_round",
           "pos": [
-            3,
+            -16,
             0,
-            24.5
+            5
+          ],
+          "scale": 5.2
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            -6.5,
+            0,
+            2.8
+          ],
+          "scale": 5.0
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            12,
+            0,
+            3
+          ],
+          "scale": 5.6
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            18,
+            0,
+            1
+          ],
+          "scale": 5.0
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            22,
+            0,
+            5
+          ],
+          "scale": 5.4
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            31,
+            0,
+            -1
+          ],
+          "scale": 6.2
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            -31,
+            0,
+            1
+          ],
+          "scale": 6.0
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            29,
+            0,
+            7
           ],
           "scale": 6.0
         },
         {
           "asset": "props/tree_cypress",
           "pos": [
-            4,
             0,
-            17
+            0,
+            2.5
           ],
-          "scale": 5.8
+          "scale": 5.4
         },
         {
           "asset": "props/tree_cypress",
           "pos": [
-            6.5,
+            10,
             0,
-            0.5
-          ],
-          "scale": 5.2
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            -8,
-            0,
-            -19
+            6
           ],
           "scale": 5.0
         },
         {
+          "asset": "props/tree_cypress",
+          "pos": [
+            -15,
+            0,
+            -2
+          ],
+          "scale": 5.2
+        },
+        {
           "asset": "props/bush",
           "pos": [
-            10,
+            -9,
+            0,
+            -2.8
+          ],
+          "scale": 1.2
+        },
+        {
+          "asset": "props/bush",
+          "pos": [
+            13,
             0,
             -2
           ],
@@ -1623,139 +955,235 @@
         {
           "asset": "props/bush",
           "pos": [
-            3,
+            -20,
             0,
-            -13
+            5.5
           ],
           "scale": 1.2
         },
         {
           "asset": "props/bush",
           "pos": [
-            -8.5,
+            16,
             0,
-            -9
+            7
           ],
           "scale": 1.2
         },
         {
-          "asset": "props/bush",
-          "pos": [
-            -8,
-            0,
-            9.5
-          ],
-          "scale": 1.3
-        },
-        {
           "asset": "props/rock_large",
           "pos": [
-            9.5,
+            -12,
             0,
-            4.5
-          ],
-          "scale": 1.7
-        },
-        {
-          "asset": "props/rock_large",
-          "pos": [
-            -8,
-            0,
-            18.5
+            6.8
           ],
           "scale": 1.6
         },
         {
-          "asset": "props/rocks_small",
+          "asset": "props/rock_large",
           "pos": [
-            3.5,
+            20,
             0,
-            -7
-          ]
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            -9,
-            0,
-            -2
-          ]
-        },
-        {
-          "asset": "props/grass_tuft",
-          "pos": [
-            -2,
-            0,
-            0
+            -2.5
           ],
-          "scatter": 20,
-          "radius": 14
+          "scale": 1.7
+        },
+        {
+          "asset": "props/rocks_small",
+          "pos": [
+            -3,
+            0,
+            -3.5
+          ]
+        },
+        {
+          "asset": "props/rocks_small",
+          "pos": [
+            9,
+            0,
+            1
+          ]
+        },
+        {
+          "asset": "props/rocks_small",
+          "pos": [
+            -18,
+            0,
+            -3.3
+          ],
+          "scale": 0.8,
+          "collide": false
         },
         {
           "asset": "props/flowers_white",
           "pos": [
-            5,
+            -8,
             0,
-            0
+            3
           ],
-          "scatter": 6,
+          "scatter": 10,
           "radius": 5
         },
         {
           "asset": "props/flowers_white",
           "pos": [
-            -10,
+            14,
             0,
-            5
+            2
           ],
-          "scatter": 5,
-          "radius": 4
+          "scatter": 8,
+          "radius": 5
+        },
+        {
+          "asset": "props/grass_tuft",
+          "pos": [
+            0,
+            0,
+            1
+          ],
+          "scatter": 18,
+          "radius": 14
         }
       ],
       "blockades": [
         {
-          "id": "b_alone",
+          "id": "b_worthy",
           "pos": [
-            -9.5,
-            4
+            6,
+            -6
           ],
-          "text": "I'm alone",
-          "release": "I am connected",
-          "points": 10
-        },
-        {
-          "id": "b_change",
-          "pos": [
-            5,
-            8
-          ],
-          "text": "I can't change",
-          "release": "I can grow",
-          "points": 10
+          "text": "I'm not worthy",
+          "release": "I am worthy",
+          "points": 10,
+          "size": 1.5,
+          "stretch": 1.2
         }
       ],
-      "hints": [
+      "hints": [],
+      "ground": [],
+      "hiddenPaths": [],
+      "events": [],
+      "passages": [],
+      "fogWalls": []
+    },
+    {
+      "id": "pass",
+      "origin": [
+        4,
+        12
+      ],
+      "areas": [
+        [
+          -18,
+          -2,
+          10,
+          3
+        ]
+      ],
+      "neighbours": [
+        "meadow",
+        "river",
+        "chasm"
+      ],
+      "props": [
         {
-          "id": "hint_river",
+          "asset": "props/tree_round",
+          "pos": [
+            -24,
+            0,
+            0
+          ],
+          "scale": 5.6
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            -16,
+            0,
+            0.5
+          ],
+          "scale": 5.4
+        },
+        {
+          "asset": "props/tree_round",
           "pos": [
             -9,
-            3,
-            -4
+            0,
+            0.3
           ],
-          "line": "hintRiver",
-          "radius": 6
+          "scale": 5.0
         },
         {
-          "id": "hint_ford",
+          "asset": "props/tree_cypress",
           "pos": [
-            -1.7,
-            2,
-            1
+            -3.5,
+            0,
+            0.8
           ],
-          "line": "hintFord",
-          "radius": 4
+          "scale": 5.4
+        },
+        {
+          "asset": "props/tree_cypress",
+          "pos": [
+            8,
+            0,
+            0.2
+          ],
+          "scale": 5.2
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            14,
+            0,
+            -0.2
+          ],
+          "scale": 5.6
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            21,
+            0,
+            -0.8
+          ],
+          "scale": 5.4
+        },
+        {
+          "asset": "props/rock_large",
+          "pos": [
+            -2,
+            0,
+            -1.2
+          ],
+          "scale": 1.5
+        },
+        {
+          "asset": "props/rock_large",
+          "pos": [
+            6,
+            0,
+            -0.8
+          ],
+          "scale": 1.6
         }
       ],
+      "blockades": [
+        {
+          "id": "b_angry",
+          "pos": [
+            2,
+            -0.5
+          ],
+          "text": "I'm angry",
+          "release": "I choose peace",
+          "points": 10,
+          "size": 1.35,
+          "stretch": 1.1,
+          "hint": "secondBlockade"
+        }
+      ],
+      "hints": [],
       "ground": [],
       "hiddenPaths": [],
       "events": [],
@@ -1765,152 +1193,124 @@
     {
       "id": "chasm",
       "origin": [
-        2,
-        19
+        0,
+        20
       ],
       "areas": [
         [
-          -16,
-          -9,
-          20,
-          -3
+          -13,
+          -5,
+          13,
+          0
         ],
         [
-          -10,
-          4,
-          6,
-          14
+          -7,
+          7,
+          7,
+          16
         ]
       ],
       "neighbours": [
         "meadow",
-        "clearing",
-        "forest",
-        "ruins",
-        "river"
+        "river",
+        "pass"
       ],
       "props": [
         {
+          "asset": "props/tree_cypress",
+          "pos": [
+            -2.8,
+            0,
+            -1
+          ],
+          "scale": 5.4
+        },
+        {
+          "asset": "props/tree_cypress",
+          "pos": [
+            2.8,
+            0,
+            -1
+          ],
+          "scale": 5.2
+        },
+        {
+          "asset": "props/rocks_small",
+          "line": [
+            [
+              -11.3,
+              -0.5
+            ],
+            [
+              -4.5,
+              -0.5
+            ]
+          ],
+          "count": 4,
+          "jitter": 0.35
+        },
+        {
+          "asset": "props/rocks_small",
+          "line": [
+            [
+              4.5,
+              -0.5
+            ],
+            [
+              11.3,
+              -0.5
+            ]
+          ],
+          "count": 4,
+          "jitter": 0.35
+        },
+        {
+          "asset": "props/rock_large",
+          "line": [
+            [
+              -12,
+              7.8
+            ],
+            [
+              -5,
+              7.8
+            ]
+          ],
+          "count": 3,
+          "jitter": 0.4,
+          "scale": 1.4
+        },
+        {
+          "asset": "props/rock_large",
+          "line": [
+            [
+              5,
+              7.8
+            ],
+            [
+              12,
+              7.8
+            ]
+          ],
+          "count": 3,
+          "jitter": 0.4,
+          "scale": 1.4
+        },
+        {
           "asset": "props/rock_large",
           "pos": [
-            -13,
+            -10,
             0,
-            -5
+            -1.5
           ],
-          "scale": 1.8
+          "scale": 1.7
         },
         {
           "asset": "props/rock_large",
           "pos": [
             10.5,
             0,
-            -4.5
-          ],
-          "scale": 1.7
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            -8,
-            0,
-            -4
-          ]
-        },
-        {
-          "asset": "props/rocks_small",
-          "pos": [
-            4,
-            0,
-            -4
-          ]
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            -4.8,
-            0,
-            -4
-          ],
-          "scale": 5.6
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            0.8,
-            0,
-            -4
-          ],
-          "scale": 5.4
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            -7,
-            0,
-            12
-          ],
-          "scale": 6.0
-        },
-        {
-          "asset": "props/tree_cypress",
-          "pos": [
-            3,
-            0,
-            12
-          ],
-          "scale": 6.2
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -12.5,
-            0,
-            15
-          ],
-          "scale": 5.4
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            8.5,
-            0,
-            15
-          ],
-          "scale": 5.6
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            -17,
-            0,
-            10
-          ],
-          "scale": 6.0
-        },
-        {
-          "asset": "props/tree_round",
-          "pos": [
-            13.5,
-            0,
-            10
-          ],
-          "scale": 6.0
-        },
-        {
-          "asset": "props/rock_large",
-          "pos": [
-            -8,
-            0,
-            6.5
-          ],
-          "scale": 1.7
-        },
-        {
-          "asset": "props/rock_large",
-          "pos": [
-            4.5,
-            0,
-            6
+            -2
           ],
           "scale": 1.6
         },
@@ -1919,54 +1319,180 @@
           "pos": [
             -6,
             0,
-            5
+            -0.8
           ]
         },
         {
           "asset": "props/rocks_small",
           "pos": [
-            2.5,
+            6,
             0,
-            5.2
+            -0.7
           ]
         },
         {
           "asset": "props/bush",
           "pos": [
-            -8.5,
+            -11,
             0,
-            9.5
-          ],
-          "scale": 1.3
-        },
-        {
-          "asset": "props/bush",
-          "pos": [
-            4.5,
-            0,
-            9.5
+            -4
           ],
           "scale": 1.2
         },
         {
-          "asset": "props/grass_tuft",
+          "asset": "props/bush",
           "pos": [
-            -2,
+            11,
             0,
-            8
+            -3.8
           ],
-          "scatter": 6,
-          "radius": 5
+          "scale": 1.2
         },
         {
           "asset": "props/flowers_white",
           "pos": [
-            -2,
             0,
-            7
+            0,
+            -3
           ],
           "scatter": 6,
-          "radius": 3
+          "radius": 3.5
+        },
+        {
+          "asset": "props/grass_tuft",
+          "pos": [
+            0,
+            0,
+            -3
+          ],
+          "scatter": 8,
+          "radius": 7
+        },
+        {
+          "asset": "props/tree_cypress",
+          "pos": [
+            -5,
+            0,
+            14.5
+          ],
+          "scale": 6.0
+        },
+        {
+          "asset": "props/tree_cypress",
+          "pos": [
+            5,
+            0,
+            14.5
+          ],
+          "scale": 6.2
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            -10,
+            0,
+            18
+          ],
+          "scale": 5.4
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            10,
+            0,
+            18
+          ],
+          "scale": 5.6
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            -14,
+            0,
+            12
+          ],
+          "scale": 6.0
+        },
+        {
+          "asset": "props/tree_round",
+          "pos": [
+            14,
+            0,
+            12
+          ],
+          "scale": 6.0
+        },
+        {
+          "asset": "props/rock_large",
+          "pos": [
+            -5.5,
+            0,
+            9
+          ],
+          "scale": 1.6
+        },
+        {
+          "asset": "props/rock_large",
+          "pos": [
+            6,
+            0,
+            8.5
+          ],
+          "scale": 1.5
+        },
+        {
+          "asset": "props/rocks_small",
+          "pos": [
+            -3.8,
+            0,
+            7.8
+          ]
+        },
+        {
+          "asset": "props/rocks_small",
+          "pos": [
+            4.2,
+            0,
+            8
+          ]
+        },
+        {
+          "asset": "props/bush",
+          "pos": [
+            -6,
+            0,
+            11.5
+          ],
+          "scale": 1.2
+        },
+        {
+          "asset": "props/bush",
+          "pos": [
+            6,
+            0,
+            11.5
+          ],
+          "scale": 1.2
+        },
+        {
+          "asset": "props/flowers_white",
+          "pos": [
+            0,
+            0,
+            9.5
+          ],
+          "scatter": 5,
+          "radius": 2.5
+        },
+        {
+          "asset": "props/grass_tuft",
+          "pos": [
+            0,
+            0,
+            10
+          ],
+          "scatter": 6,
+          "radius": 4
         }
       ],
       "blockades": [],
@@ -1974,12 +1500,12 @@
         {
           "id": "hint_chasm",
           "pos": [
-            -2,
+            0,
             3,
-            0.5
+            3.5
           ],
           "line": "hintChasm",
-          "radius": 12
+          "radius": 8
         }
       ],
       "ground": [
@@ -1988,16 +1514,16 @@
           "texture": "textures/ground_stone",
           "points": [
             [
-              -2,
-              4.2
+              0,
+              7.2
             ],
             [
-              -2,
-              7.5
+              0,
+              10
             ],
             [
-              -2,
-              10.8
+              0,
+              13
             ]
           ],
           "width": 2.8,
