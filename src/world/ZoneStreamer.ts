@@ -21,7 +21,7 @@ import { GROUND_OVERLAY_ALPHA_INDEX, type Terrain } from './Terrain';
 
 type ZoneState = 'loading' | 'loaded';
 
-interface Bounds {
+export interface Bounds {
   minX: number;
   maxX: number;
   minZ: number;
@@ -153,12 +153,27 @@ export class ZoneStreamer {
    * and it starts beyond the point where the horizon forms). Cheap: 8 corners per part.
    */
   private cull(): void {
+    const test = (b: Bounds): boolean => this.boundsVisible(b);
+    for (const z of this.loaded.values()) {
+      if (z.state !== 'loaded') continue;
+      for (const part of z.parts) {
+        const v = test(part.bounds);
+        if (v !== part.visible) {
+          part.visible = v;
+          part.setVisible(v);
+        }
+      }
+    }
+  }
+
+  /** True if a box (on the ground, `top` metres high) can be seen this frame. */
+  boundsVisible(b: Bounds): boolean {
     const cam = this.rig.camera;
     const vp = cam.getViewMatrix().multiply(cam.getProjectionMatrix());
     const horizonNdc = 1 - 2 * this.rig.horizonFromTop;
     const pivotZ = this.rig.target.z;
     const camZ = cam.position.z;
-    const test = (b: Bounds): boolean => {
+    {
       if (b.maxZ < camZ - 2) return false;
       let minX = Infinity;
       let maxX = -Infinity;
@@ -179,16 +194,6 @@ export class ZoneStreamer {
       if (maxX < -1.05 || minX > 1.05 || minY > 1.05) return false;
       const pastHorizon = b.minZ - pivotZ > this.rig.horizonDz + 1 && maxTopY < horizonNdc - 0.005;
       return !pastHorizon;
-    };
-    for (const z of this.loaded.values()) {
-      if (z.state !== 'loaded') continue;
-      for (const part of z.parts) {
-        const v = test(part.bounds);
-        if (v !== part.visible) {
-          part.visible = v;
-          part.setVisible(v);
-        }
-      }
     }
   }
 

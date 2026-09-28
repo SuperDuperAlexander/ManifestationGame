@@ -18,7 +18,56 @@ export default function scenarios({ wait, shot, hold, page }) {
     }, [x, z]);
     await wait(1800);
   };
+  const pz = () => page.evaluate(() => window.__lw.game.player.position.z);
   return {
+    async partial() {
+      await tp(-20, 44);
+      const n = await page.evaluate(() =>
+        ['b_worthy', 'b_angry', 'b_enough', 'b_afraid'].filter((id) => window.__lw.game.fogs.debugRelease(id)).length,
+      );
+      console.log('released planks', n);
+      await tp(80, 0);
+      await wait(9000);
+      await hold('KeyW', 4000);
+      console.log('with 4 planks, z =', (await pz()).toFixed(2), '(must stay below 9)');
+      await shot('p1-four-planks');
+      await page.evaluate(() => window.__lw.game.fogs.debugRelease('b_alone'));
+      await wait(4000);
+      await shot('p2-five-planks');
+      await hold('KeyW', 4500);
+      console.log('with 5 planks, z =', (await pz()).toFixed(2), '(must be above 17)');
+      await shot('p3-crossed');
+    },
+    async finale() {
+      // Release all blockades zone by zone (test helper), then walk to the gate.
+      for (const [x, z] of [[-44, 40], [0, 44], [40, 44]]) {
+        await tp(x, z);
+        const n = await page.evaluate(() => window.__lw.game.debugReleaseLoaded());
+        console.log('released', n);
+        await wait(1500);
+      }
+      await shot('g0-last-release');
+      await tp(80, 0);
+      await wait(3000);
+      await shot('g1-at-chasm');
+      await wait(8000);
+      await shot('g2-planks');
+      await wait(6000);
+      await shot('g3-bridge-done');
+      await hold('KeyW', 2600);
+      await shot('g4-on-bridge');
+      await hold('KeyW', 2600);
+      await shot('g5-far-side');
+      await wait(3000);
+      await shot('g6-gate-open');
+      await hold('KeyW', 2500);
+      await wait(1200);
+      await shot('g7-transition');
+      await wait(4000);
+      await shot('g8-card');
+      const st = await page.evaluate(() => window.__lw.stats());
+      console.log('finale', JSON.stringify(st.extra));
+    },
     async meshes() {
       await tp(0, 8);
       const names = await page.evaluate(() => window.__lw.game.scene.getActiveMeshes().data.slice(0, window.__lw.game.scene.getActiveMeshes().length).map((m) => m.name));

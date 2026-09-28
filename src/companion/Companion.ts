@@ -49,8 +49,9 @@ export class Companion {
     events.on('blockadeReleased', () => {
       this.fairy.pulse();
       this.sound.release();
-      const line = this.dialogue.line('released', this.releaseCount++);
-      if (line) void this.dialogue.sayOne('released', this.releaseCount - 1);
+      // A short word after a release, only if she is not already talking.
+      if (!this.dialogue.busy) void this.dialogue.sayOne('released', this.releaseCount);
+      this.releaseCount++;
     });
   }
 
@@ -100,8 +101,10 @@ export class Companion {
   }
 
   /** She flies to a point, glows, chimes, says one line and comes back. */
-  showSomething(point: Vector3, lineKey: string, extraKeys: string[] = []): Promise<void> {
+  showSomething(point: Vector3, lineKey: string, extraKeys: string[] = [], range: number = TUNING.fairy.hintRange): Promise<void> {
     return this.queue(async () => {
+      // The player walked on while she was busy: this hint is no longer about here.
+      if (Math.hypot(point.x - this.playerPos.x, point.z - this.playerPos.z) > range * 2) return;
       await withTimeout(this.fairy.visit(point), 4);
       this.sound.chime();
       await this.dialogue.say(lineKey);
@@ -164,7 +167,7 @@ export class Companion {
         return;
       }
       this.shownHints.add(best.id);
-      void this.showSomething(new Vector3(best.x, best.y ?? 2.4, best.z), best.line);
+      void this.showSomething(new Vector3(best.x, best.y ?? 2.4, best.z), best.line, [], best.radius ?? TUNING.fairy.hintRange);
     }
   }
 }

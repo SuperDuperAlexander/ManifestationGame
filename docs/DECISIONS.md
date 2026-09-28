@@ -78,3 +78,18 @@ or sunk behind the bent horizon. This keeps draw calls between about 30 and 60 (
 
 **D17. New fairy lines** (drafts, please check): hints for the start, oak, well, forest, ruins,
 monolith, river, ford, hidden path and chasm, plus short lines after each release. All in `en.json`.
+
+## Milestone 6 — Bridge and gate
+
+**D18. Planks appear when you are at the chasm**, one after another, even if the fogs were released
+long before. So you always see the bridge being built. Each plank plays a soft tone.
+
+**D19. 5 of 6 planks make the bridge walkable** (`planksRequired: 5`). The missing plank is filled by a
+faint thread of light. The sixth fog makes the bridge complete and brighter.
+
+**D20. The gate opens when the bridge is walkable.** The big fog in front of it dissolves, the gate glows,
+and walking into it plays the light-and-fog blend (2.6 s), then a calm "Chapter complete" card.
+There is no chapter 2 yet, so the card stays. Reload the page to play again.
+
+**D21. Old hints are skipped.** If the player walked away before the fairy could show a hint,
+she does not show it later somewhere else. After a release she only speaks if she is not talking already.

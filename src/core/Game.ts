@@ -15,6 +15,9 @@ import { loadChapter, resolveChapter, buildWalkability, type ResolvedChapter } f
 import { Terrain } from '../world/Terrain';
 import { Backdrop } from '../world/Backdrop';
 import { ZoneStreamer } from '../world/ZoneStreamer';
+import { LightBridge } from '../gameplay/LightBridge';
+import { ChapterGate } from '../gameplay/ChapterGate';
+import { Transition } from '../ui/Transition';
 import { BreathSystem } from '../player/BreathSystem';
 import { BreathVisuals } from '../player/BreathVisuals';
 import { BreathGuide } from '../ui/BreathGuide';
@@ -66,6 +69,11 @@ export class Game {
   terrain: Terrain;
   backdrop: Backdrop;
   streamer: ZoneStreamer | null = null;
+  bridge: LightBridge | null = null;
+  gate: ChapterGate | null = null;
+  readonly transition: Transition;
+  private blockadesReleased = 0;
+  private complete = false;
   /** True on touch devices: letting go of the breath button breathes out. */
   touchMode = false;
   private time = 0;
@@ -105,6 +113,23 @@ export class Game {
     this.terrain = new Terrain(this.scene, this.assets);
     this.backdrop = new Backdrop(this.scene, this.rig, this.assets);
     this.events.on('zoneEntered', (e) => this.onZoneEntered(e.id));
+    this.transition = new Transition(ui);
+    this.events.on('blockadeReleased', () => {
+      this.blockadesReleased++;
+      this.bridge?.setEarned(this.blockadesReleased);
+    });
+    this.events.on('plankAdded', (e) => {
+      this.fairy.pulse();
+      if (e.index === 0) void this.companion.say('bridge', { once: true });
+    });
+    this.events.on('bridgeWalkable', () => {
+      this.gate?.openGate();
+      void this.companion.say('bridgeReady', { once: true });
+    });
+    this.events.on('gateOpened', () => {
+      this.sound.gate();
+      void this.companion.say('gateOpen', { once: true });
+    });
 
     window.addEventListener('resize', () => {
       this.engine.resize();
@@ -134,6 +159,11 @@ export class Game {
     this.rig.snapTo(this.player.position);
     this.streamer = new ZoneStreamer(this.scene, chapter, this.assets, this.fogs, this.events, this.rig, this.terrain);
     await Promise.all([this.terrain.build(spec.terrain), this.backdrop.build(spec.backdrop)]);
+    if (spec.bridge) this.bridge = new LightBridge(this.scene, spec.bridge, this.walk, this.events, this.sound);
+    if (spec.gate) {
+      this.gate = new ChapterGate(this.scene, spec.gate, this.events, this.fogs);
+      await this.gate.build(this.assets, spec.assets[spec.gate.asset]);
+    }
     // The start zone and its neighbours are ready before the first frame is shown.
     this.pauseZoneEvents = true;
     await this.streamer.prime(chapter.start.zone);
@@ -191,6 +221,56 @@ export class Game {
         void this.companion.say(ev.line);
       }
     });
+    // At the bridge zone the fairy explains the bridge once, depending on how much light there is.
+    const bridge = this.chapter.spec.bridge;
+    if (bridge && zoneId === bridge.zone && this.bridge && !this.bridge.isWalkable) {
+      if (this.blockadesReleased === 0) void this.companion.say('hintChasmEarly', { once: true });
+      else if (this.blockadesReleased < bridge.planksRequired) void this.companion.say('bridgeMore', { once: true });
+    }
+  }
+
+  /** The bridge, the gate and walking through it. */
+  private updateGoal(dt: number): void {
+    const px = this.player.position.x;
+    const pz = this.player.position.z;
+    if (this.bridge && this.chapter?.spec.bridge) {
+      const [bx, bz] = this.chapter.spec.bridge.from;
+      this.bridge.playerNear = Math.hypot(px - bx, pz - bz) < 15;
+      this.bridge.update(dt);
+      this.bridge.setVisible(
+        this.streamer?.boundsVisible({ minX: bx - 3, maxX: bx + 3, minZ: bz - 1, maxZ: this.chapter.spec.bridge.to[1] + 1, top: 2 }) ?? true,
+      );
+    }
+    if (this.gate && this.chapter?.spec.gate) {
+      const [gx, gz] = this.chapter.spec.gate.pos;
+      this.gate.setVisible(this.streamer?.boundsVisible({ minX: gx - 3, maxX: gx + 3, minZ: gz - 1, maxZ: gz + 5, top: 7 }) ?? true);
+      if (this.gate.update(dt, px, pz)) void this.finishChapter();
+    }
+  }
+
+  /** Walking through the gate: light and fog fill the screen, then the chapter card. */
+  private async finishChapter(): Promise<void> {
+    if (this.complete || !this.chapter) return;
+    this.complete = true;
+    this.input.enabled = false;
+    this.sound.gate();
+    this.events.emit('chapterComplete', { id: this.chapter.spec.id });
+    await this.transition.blendIn(TUNING.gate.transitionTime);
+    this.transition.showCard(
+      this.dialogue.line('chapterEndTitle'),
+      this.chapter.spec.title,
+      this.dialogue.line('chapterEnd'),
+      this.dialogue.line('chapterEndNext'),
+    );
+  }
+
+  /** Test helper (used by scripts/check-browser.mjs): releases every loaded blockade. */
+  debugReleaseLoaded(): number {
+    let n = 0;
+    for (const zone of this.chapter?.zones.values() ?? []) {
+      for (const b of zone.blockades) if (this.fogs.debugRelease(b.id)) n++;
+    }
+    return n;
   }
 
   private frame(): void {
@@ -211,6 +291,7 @@ export class Game {
     this.player.update(dt);
     this.streamer?.update(dt, this.player.position.x, this.player.position.z);
     this.terrain.update(dt);
+    this.updateGoal(dt);
     this.fogs.update(dt, this.player, this.breath, this.input.pushPressed);
     this.breathVisuals.target = this.fogs.hasTarget ? this.fogs.streamTarget : null;
     this.breathVisuals.update(dt, this.breath, this.player.position);
@@ -244,6 +325,7 @@ export class Game {
       rhythm: this.breath.rhythmScore.toFixed(2),
       breaths: this.breath.breaths,
       light: this.lightPoints.total,
+      planks: this.bridge ? `${this.bridge.plankCount}${this.bridge.isWalkable ? ' walkable' : ''}` : '-',
       fog: this.fogs.nearest ? `${this.fogs.nearest.id} d=${this.fogs.nearest.density.toFixed(2)}` : '-',
     };
     this.debug.update(dt);

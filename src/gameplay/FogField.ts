@@ -122,6 +122,15 @@ export class FogField {
     }
   }
 
+  /** Test helper: releases a breathable fog as if it was breathed away. */
+  debugRelease(id: string): boolean {
+    const fog = this.fogs.get(id);
+    if (!fog || !fog.active || fog.data.breathable === false) return false;
+    fog.receiveLight(100);
+    this.release(fog);
+    return true;
+  }
+
   /** Opens a fog by story (fog walls, the gate). */
   open(id: string): void {
     const fog = this.fogs.get(id);
