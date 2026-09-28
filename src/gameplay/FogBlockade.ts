@@ -9,7 +9,6 @@ import type { Scene } from '@babylonjs/core/scene';
 import { TUNING } from '../config/tuning';
 import { Random, clamp01, damp, smoothstep } from '../core/Random';
 import { createFogMaterial, type FogMaterial } from '../shaders/fogDissolve';
-import { curveDrop } from '../shaders/paperShader';
 import { procTexture } from '../world/ProceduralTextures';
 import { TextCard } from '../world/TextCard';
 import type { Circle } from '../world/Walkability';
@@ -176,7 +175,7 @@ export class FogBlockade {
     const size = this.data.size ?? 1;
     const ps = new ParticleSystem(`fogBurst:${this.id}`, 220, this.scene);
     ps.particleTexture = procTexture(this.scene, 'dot');
-    const y = 1.1 * size - curveDrop(this.data.z);
+    const y = 1.1 * size;
     ps.emitter = new Vector3(this.data.x, y, this.data.z);
     ps.minEmitBox = new Vector3(-1.6 * size * (this.data.stretch ?? 1), -0.8 * size, -0.8 * size);
     ps.maxEmitBox = new Vector3(1.6 * size * (this.data.stretch ?? 1), 1.0 * size, 0.8 * size);

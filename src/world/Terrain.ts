@@ -1,4 +1,5 @@
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
+import { VertexData } from '@babylonjs/core/Meshes/mesh.vertexData';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
@@ -7,14 +8,15 @@ import { PALETTE, color4 } from '../config/palette';
 import type { AssetLoader } from '../core/AssetLoader';
 import type { TerrainSpec } from '../types/chapter';
 import { createPaperMaterial, setPaperUv, type PaperMaterial } from '../shaders/paperShader';
-import { createGroundRect, createRibbon, createWall, curveSafeBounds } from './Ground';
+import { createGroundRect, createRibbon, createWall } from './Ground';
 import { procTexture } from './ProceduralTextures';
+import type { Valley } from './Valley';
 
 /** Draw order for flat things lying on the ground: after the backdrop, before fog. */
 export const GROUND_OVERLAY_ALPHA_INDEX = 5;
 
 /**
- * Region-wide ground that never streams: the base grass, the paths between zones,
+ * Region-wide ground that never streams: the valley (floor and hills), the paths,
  * the river and the chasm. Few meshes, few draw calls.
  */
 export class Terrain {
@@ -27,29 +29,16 @@ export class Terrain {
     private readonly assets: AssetLoader,
   ) {}
 
-  async build(spec: TerrainSpec): Promise<void> {
+  async build(spec: TerrainSpec, valley: Valley): Promise<void> {
     const scene = this.scene;
-    // Base ground: all rectangles with the same texture become one mesh.
-    const byTexture = new Map<string, { rect: [number, number, number, number]; tile?: number }[]>();
-    for (const g of spec.ground) {
-      const list = byTexture.get(g.texture) ?? [];
-      list.push(g);
-      byTexture.set(g.texture, list);
-    }
-    for (const [texture, rects] of byTexture) {
-      const img = await this.assets.acquire(texture, { wrap: true, anisotropy: 4 });
-      const parts = rects.map((g, i) => {
-        const [x0, z0, x1, z1] = g.rect;
-        return createGroundRect(`ground:${texture}:${i}`, scene, (x0 + x1) / 2, (z0 + z1) / 2, x1 - x0, z1 - z0, 0, 3);
-      });
-      const merged = Mesh.MergeMeshes(parts, true, true) ?? parts[0]!;
-      merged.name = `ground:${texture}`;
-      merged.material = createPaperMaterial(`groundMat:${texture}`, scene, {
-        texture: img.texture,
-        worldTile: rects[0]?.tile ?? TUNING.ground.grassTile,
-      });
-      this.meshes.push(merged);
-    }
+    const img = await this.assets.acquire(spec.valley.texture, { wrap: true, anisotropy: 4 });
+    const ground = this.buildValley(valley, spec.chasms.map((c) => c.rect));
+    ground.material = createPaperMaterial('groundMat', scene, {
+      texture: img.texture,
+      worldTile: spec.valley.tile ?? TUNING.ground.grassTile,
+      vertexShade: true,
+    });
+    this.meshes.push(ground);
 
     for (const [i, p] of spec.paths.entries()) {
       const img = await this.assets.acquire(p.texture, { wrap: true, anisotropy: 4 });
@@ -92,6 +81,58 @@ export class Terrain {
 
     for (const [i, c] of spec.chasms.entries()) await this.buildChasm(i, c);
     this.finish();
+  }
+
+  /**
+   * The valley ground as one grid mesh. Slopes get a painted shade (light from the right,
+   * like the art). Holes are left for chasms, and ground that has fallen away behind the
+   * north ridge is left out.
+   */
+  private buildValley(valley: Valley, holes: [number, number, number, number][]): Mesh {
+    const { cols, rows, cell, minX, minZ } = valley;
+    const positions: number[] = [];
+    const uvs: number[] = [];
+    const shade: number[] = [];
+    const indices: number[] = [];
+    const lx = 0.75;
+    const ly = 0.9;
+    const lz = -0.35;
+    const ll = Math.hypot(lx, ly, lz);
+    const flat = ly / ll;
+    const h = (i: number, j: number): number =>
+      valley.gridHeight(Math.min(Math.max(i, 0), cols), Math.min(Math.max(j, 0), rows));
+    for (let j = 0; j <= rows; j++) {
+      for (let i = 0; i <= cols; i++) {
+        positions.push(minX + i * cell, h(i, j), minZ + j * cell);
+        uvs.push(i / cols, j / rows);
+        const nx = -(h(i + 1, j) - h(i - 1, j)) / (2 * cell);
+        const nz = -(h(i, j + 1) - h(i, j - 1)) / (2 * cell);
+        const nl = Math.hypot(nx, 1, nz);
+        const ndl = (nx * lx + ly + nz * lz) / (nl * ll);
+        shade.push(Math.min(1.18, Math.max(0.72, 1 + (ndl - flat) * TUNING.ground.slopeShade)));
+      }
+    }
+    const inHole = (x: number, z: number): boolean =>
+      holes.some(([x0, z0, x1, z1]) => x > x0 && x < x1 && z > z0 && z < z1);
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        if (inHole(minX + (i + 0.5) * cell, minZ + (j + 0.5) * cell)) continue;
+        if (Math.max(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1)) < -3) continue;
+        const a = j * (cols + 1) + i;
+        const b = a + 1;
+        const c = a + cols + 1;
+        const d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+    const mesh = new Mesh('ground:valley', this.scene);
+    const vd = new VertexData();
+    vd.positions = positions;
+    vd.uvs = uvs;
+    vd.indices = indices;
+    vd.applyToMesh(mesh);
+    mesh.setVerticesData('shade', shade, false, 1);
+    return mesh;
   }
 
   private async buildChasm(index: number, c: TerrainSpec['chasms'][number]): Promise<void> {
@@ -153,7 +194,8 @@ export class Terrain {
   finish(): void {
     for (const m of this.meshes) {
       m.isPickable = false;
-      curveSafeBounds(m);
+      m.alwaysSelectAsActiveMesh = false;
+      m.refreshBoundingInfo();
       m.freezeWorldMatrix();
     }
   }

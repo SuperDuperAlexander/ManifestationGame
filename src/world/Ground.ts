@@ -1,12 +1,10 @@
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import { VertexData } from '@babylonjs/core/Meshes/mesh.vertexData';
 import type { Scene } from '@babylonjs/core/scene';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 
 /**
- * Flat ground pieces. All are simple meshes with world-space UVs, so textures tile
- * seamlessly across pieces. The bend toward the horizon happens in the shader,
- * so large pieces are subdivided enough to bend smoothly.
+ * Ground pieces. All are simple meshes with world-space UVs, so textures tile
+ * seamlessly across pieces.
  */
 
 /** A flat rectangle on the ground, subdivided every `cell` metres. */
@@ -172,20 +170,6 @@ function build(name: string, scene: Scene, positions: number[], uvs: number[], i
   mesh.isPickable = false;
   mesh.alwaysSelectAsActiveMesh = true;
   return mesh;
-}
-
-/**
- * Lets the camera skip a static mesh when it is off screen, even though the shader bends it down:
- * its bounding box is stretched down far enough to hold the bent shape.
- */
-export function curveSafeBounds(mesh: Mesh, drop = 40): void {
-  mesh.refreshBoundingInfo();
-  const bi = mesh.getBoundingInfo();
-  const min = bi.minimum.clone();
-  const max = bi.maximum.clone();
-  bi.reConstruct(new Vector3(min.x, min.y - drop, min.z), new Vector3(max.x, max.y + 1, max.z), mesh.getWorldMatrix());
-  mesh.alwaysSelectAsActiveMesh = false;
-  mesh.doNotSyncBoundingInfo = true;
 }
 
 /** Points along a polyline, about `step` metres apart, following Catmull-Rom curves. */

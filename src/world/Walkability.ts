@@ -1,16 +1,9 @@
 /**
  * Where the player may stand.
- * Walkable = inside an area rectangle or on a path corridor,
+ * Walkable = on the valley floor or on a corridor (the light bridge),
  * and not inside a blocker (unless inside a passage), and not inside a round collider.
  * All of this is plain data from the chapter file, so it works for unloaded zones too.
  */
-export interface Rect {
-  minX: number;
-  maxX: number;
-  minZ: number;
-  maxZ: number;
-}
-
 export interface Segment {
   ax: number;
   az: number;
@@ -28,7 +21,8 @@ export interface Circle {
 }
 
 export class Walkability {
-  readonly areas: Rect[] = [];
+  /** The valley floor test: true if a body of this radius fits here. */
+  floor: (x: number, z: number, radius: number) => boolean = () => false;
   readonly corridors: Segment[] = [];
   readonly blockers: Segment[] = [];
   readonly blockerCircles: Circle[] = [];
@@ -37,13 +31,7 @@ export class Walkability {
 
   /** True if a point (with a body radius) may stand here, ignoring round colliders. */
   isWalkable(x: number, z: number, radius: number): boolean {
-    let inside = false;
-    for (const a of this.areas) {
-      if (x >= a.minX + radius && x <= a.maxX - radius && z >= a.minZ + radius && z <= a.maxZ - radius) {
-        inside = true;
-        break;
-      }
-    }
+    let inside = this.floor(x, z, radius);
     if (!inside) {
       for (const c of this.corridors) {
         if (segDist(x, z, c) <= c.halfWidth - radius * 0.5) {

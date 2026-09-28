@@ -8,7 +8,7 @@ import '@babylonjs/core/Particles/particleSystemComponent';
 import type { Scene } from '@babylonjs/core/scene';
 import { TUNING } from '../config/tuning';
 import { damp } from '../core/Random';
-import { createPaperMaterial, curveDrop, setPaperColor, type PaperMaterial } from '../shaders/paperShader';
+import { createPaperMaterial, setPaperColor, type PaperMaterial } from '../shaders/paperShader';
 import { procTexture } from '../world/ProceduralTextures';
 
 export type FairyMode = 'away' | 'arriving' | 'orbit' | 'visiting' | 'returning' | 'leading';
@@ -226,10 +226,10 @@ export class Fairy {
     const gs = 1 + this.boost * 0.5;
     this.glowCard.scaling.set(gs, gs, gs);
 
-    // Shadow on the ground under her; particles follow the bent world by hand.
+    // Shadow on the ground under her; the trail follows her.
     this.shadow.position.set(this.position.x, 0.03, this.position.z);
     const sh = Math.max(0.3, 1 - this.position.y / 6);
     this.shadow.scaling.set(sh, 1, sh);
-    this.trailEmitter.set(this.position.x, this.position.y - curveDrop(this.position.z), this.position.z);
+    this.trailEmitter.set(this.position.x, this.position.y, this.position.z);
   }
 }

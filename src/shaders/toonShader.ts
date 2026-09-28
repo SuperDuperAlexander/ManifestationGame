@@ -2,8 +2,6 @@ import { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import { Effect } from '@babylonjs/core/Materials/effect';
 import type { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
-import { TUNING } from '../config/tuning';
-import { WORLD_UNIFORMS } from './paperShader';
 
 /**
  * Flat, soft toon shading for the code-made 3D figures (player).
@@ -16,7 +14,6 @@ attribute vec3 position;
 attribute vec3 normal;
 uniform mat4 world;
 uniform mat4 viewProjection;
-uniform vec4 uCurve;
 varying vec3 vNormal;
 #ifdef VERTEXCOLOR
 attribute vec4 color;
@@ -27,8 +24,6 @@ void main(void) {
   vColor = color.rgb;
 #endif
   vec4 wp = world * vec4(position, 1.0);
-  float d = max(wp.z - uCurve.x - uCurve.y, 0.0);
-  wp.y -= uCurve.z * d * d;
   vNormal = normalize(mat3(world) * normal);
   gl_Position = viewProjection * wp;
 }
@@ -73,7 +68,7 @@ export function createToonMaterial(name: string, scene: Scene, color: Color3, sh
     { vertex: 'toon', fragment: 'toon' },
     {
       attributes: ['position', 'normal'],
-      uniforms: ['world', 'viewProjection', 'uCurve', 'uColor', 'uShadow', 'uGlow'],
+      uniforms: ['world', 'viewProjection', 'uColor', 'uShadow', 'uGlow'],
     },
   ) as ToonMaterial;
   mat.glow = 0;
@@ -83,7 +78,6 @@ export function createToonMaterial(name: string, scene: Scene, color: Color3, sh
   mat.onBindObservable.add(() => {
     const effect = mat.getEffect();
     if (!effect) return;
-    effect.setFloat4('uCurve', WORLD_UNIFORMS.pivotZ, TUNING.curve.flatDistance, TUNING.curve.strength, 0);
     effect.setFloat('uGlow', mat.glow);
   });
   return mat;

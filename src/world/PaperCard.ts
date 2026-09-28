@@ -41,11 +41,10 @@ export class PaperCardSet {
     this.material = createPaperMaterial(`cardMat:${name}`, scene, {
       texture: image.texture,
       alphaTest: true,
+      seeThrough: true,
     });
     this.mesh.material = this.material;
     this.mesh.isPickable = false;
-    // Cards bend with the world in the shader, so CPU culling could drop visible ones.
-    this.mesh.alwaysSelectAsActiveMesh = true;
 
     const lean = (TUNING.cards.leanBackDeg * Math.PI) / 180;
     const matrices = new Float32Array(instances.length * 16);
@@ -66,6 +65,8 @@ export class PaperCardSet {
     });
     this.mesh.thinInstanceSetBuffer('matrix', matrices, 16, true);
     this.mesh.thinInstanceSetBuffer('color', colors, 4, true);
+    // The camera skips the whole set when none of its cards is on screen.
+    this.mesh.thinInstanceRefreshBoundingInfo(false);
 
     const withShadow = opts.shadows === false ? [] : sorted.filter((s) => s.shadow > 0);
     if (withShadow.length) {

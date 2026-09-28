@@ -158,6 +158,7 @@ export class Game {
     this.chapter = chapter;
     this.assets.setBase(import.meta.env.BASE_URL + spec.assetBase.replace(/^\//, ''));
     buildWalkability(chapter, this.walk);
+    this.rig.ground = (x, z) => chapter.valley.sample(x, z);
     for (const zone of chapter.zones.values()) {
       for (const h of zone.hints) this.companion.addHint(h);
       for (const b of zone.blockades) this.companion.addHint({ id: b.id, x: b.x, z: b.z, line: 'hint', blockade: true, y: 2.8 });
@@ -167,7 +168,7 @@ export class Game {
     this.player.teleport(chapter.start.x, chapter.start.z);
     this.rig.snapTo(this.player.position);
     this.streamer = new ZoneStreamer(this.scene, chapter, this.assets, this.fogs, this.events, this.rig, this.terrain);
-    await Promise.all([this.terrain.build(spec.terrain), this.backdrop.build(spec.backdrop)]);
+    await Promise.all([this.terrain.build(spec.terrain, chapter.valley), this.backdrop.build(spec.backdrop)]);
     if (spec.bridge) this.bridge = new LightBridge(this.scene, spec.bridge, this.walk, this.events, this.sound);
     if (spec.gate) {
       this.gate = new ChapterGate(this.scene, spec.gate, this.events, this.fogs);
@@ -349,13 +350,16 @@ export class Game {
     this.dialogue.update(dt);
     this.hud.update(dt);
     this.rig.update(dt, this.player.position);
+    const cam = this.rig.camera.position;
+    WORLD_UNIFORMS.see = [this.player.position.x, 0.9, this.player.position.z];
+    WORLD_UNIFORMS.camera = [cam.x, cam.y, cam.z];
     this.backdrop.update();
     this.debug.loadedZones = this.streamer?.loadedIds ?? [];
 
     this.debug.extra = {
       player: `${this.player.position.x.toFixed(1)}, ${this.player.position.z.toFixed(1)}`,
       zone: this.streamer?.current ?? '-',
-      horizon: this.rig.horizonFromTop.toFixed(2),
+      ridge: this.rig.horizonFromTop.toFixed(2),
       breath: `${this.breath.state} ${this.breath.breathLevel.toFixed(2)}`,
       rhythm: this.breath.rhythmScore.toFixed(2),
       breaths: this.breath.breaths,

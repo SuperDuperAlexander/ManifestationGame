@@ -29,7 +29,7 @@ export default function scenarios({ wait, shot, hold, page }) {
       // Intro, then walk into the forest and dissolve the first fog by real breathing.
       await wait(22000);
       await shot('x1-after-intro');
-      await tp(-50, 40);
+      await tp(-24, -1);
       await wait(4000);
       await hold('KeyW', 500);
       await wait(6000);
@@ -39,11 +39,11 @@ export default function scenarios({ wait, shot, hold, page }) {
       const light = await page.evaluate(() => window.__lw.game.lightPoints.total);
       console.log('light after 3 real breaths:', light, '(expect 10)');
       await shot('x3-released');
-      for (const [x, z] of [[-44, 40], [0, 44], [40, 44]]) {
+      for (const [x, z] of [[-22, 5], [0, 3], [20, -2]]) {
         await tp(x, z);
         await page.evaluate(() => window.__lw.game.debugReleaseLoaded());
       }
-      await tp(80, 0);
+      await tp(0, 12);
       await wait(14000);
       await hold('KeyW', 8000);
       await wait(1500);
@@ -88,33 +88,40 @@ export default function scenarios({ wait, shot, hold, page }) {
       console.log('mobile stats', st.fps, 'fps', st.drawCalls, 'draws, scaling', st.scaling.toFixed(3));
     },
     async partial() {
-      await tp(-20, 44);
+      // Waits for game events instead of fixed times, so it also works on slow (software) rendering.
+      const g = (fn) => page.evaluate(fn);
+      const walkNorthUntil = async (z, ms) => {
+        await page.keyboard.down('KeyW');
+        await page.waitForFunction((z) => window.__lw.game.player.position.z > z, z, { timeout: ms }).catch(() => {});
+        await page.keyboard.up('KeyW');
+      };
+      await tp(-20, 5);
       const n = await page.evaluate(() =>
         ['b_worthy', 'b_angry', 'b_enough', 'b_afraid'].filter((id) => window.__lw.game.fogs.debugRelease(id)).length,
       );
       console.log('released planks', n);
-      await tp(80, 0);
-      await wait(9000);
-      await hold('KeyW', 4000);
-      console.log('with 4 planks, z =', (await pz()).toFixed(2), '(must stay below 9)');
+      await tp(0, 12);
+      await page.waitForFunction(() => window.__lw.game.bridge.plankCount >= 4, null, { timeout: 120000 });
+      await walkNorthUntil(17, 15000);
+      console.log('with 4 planks, z =', (await pz()).toFixed(2), '(must stay below 16)');
       await shot('p1-four-planks');
-      await page.evaluate(() => window.__lw.game.fogs.debugRelease('b_alone'));
-      await wait(4000);
+      await g(() => window.__lw.game.fogs.debugRelease('b_alone'));
+      await page.waitForFunction(() => window.__lw.game.bridge.isWalkable, null, { timeout: 120000 });
       await shot('p2-five-planks');
-      await hold('KeyW', 4500);
-      console.log('with 5 planks, z =', (await pz()).toFixed(2), '(must be above 17)');
+      await walkNorthUntil(23.5, 90000);
+      console.log('with 5 planks, z =', (await pz()).toFixed(2), '(must be above 23)');
       await shot('p3-crossed');
     },
     async finale() {
       // Release all blockades zone by zone (test helper), then walk to the gate.
-      for (const [x, z] of [[-44, 40], [0, 44], [40, 44]]) {
+      for (const [x, z] of [[-22, 5], [0, 3], [20, -2]]) {
         await tp(x, z);
         const n = await page.evaluate(() => window.__lw.game.debugReleaseLoaded());
         console.log('released', n);
         await wait(1500);
       }
       await shot('g0-last-release');
-      await tp(80, 0);
+      await tp(0, 12);
       await wait(3000);
       await shot('g1-at-chasm');
       await wait(8000);
@@ -136,7 +143,7 @@ export default function scenarios({ wait, shot, hold, page }) {
       console.log('finale', JSON.stringify(st.extra));
     },
     async meshes() {
-      await tp(0, 8);
+      await tp(0, -6);
       const names = await page.evaluate(() => window.__lw.game.scene.getActiveMeshes().data.slice(0, window.__lw.game.scene.getActiveMeshes().length).map((m) => m.name));
       const groups = {};
       for (const n of names) {
@@ -149,20 +156,22 @@ export default function scenarios({ wait, shot, hold, page }) {
     },
     async tour() {
       const spots = [
-        ['t1-meadow', -51, -3],
-        ['t2-meadow-east', -38, 0],
-        ['t3-clearing', 0, -6],
-        ['t4-clearing-north', 0, 8],
-        ['t5-avenue', 0.5, 26],
-        ['t6-forest', -40, 38],
-        ['t7-forest-center', -44, 44],
-        ['t8-ruins', 0, 42],
-        ['t9-ruins-center', 0, 50],
-        ['t10-river', 36, 40],
-        ['t11-river-ford', 44, 46],
-        ['t12-chasm-path', 40, -3],
-        ['t13-chasm', 80, 0],
-        ['t14-chasm-edge', 80, 6],
+        ['t1-meadow', -22, -15],
+        ['t2-meadow-north', -20, -6],
+        ['t3-clearing', 0, -16],
+        ['t4-clearing-north', 0, -6],
+        ['t5-ruins', 0, 2],
+        ['t6-forest', -22, 1],
+        ['t7-forest-north', -22, 11],
+        ['t8-river', 13, -8],
+        ['t9-river-ford', 20, -4],
+        ['t10-east-bank', 27, -2],
+        ['t11-chasm', 0, 11],
+        ['t12-chasm-edge', 0, 15],
+        ['t13-landing', 0, 26],
+        ['t14-west-edge', -31, -4],
+        ['t15-east-edge', 31, 6],
+        ['t16-south-edge', 0, -24],
       ];
       for (const [name, x, z] of spots) {
         await tp(x, z);

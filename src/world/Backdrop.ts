@@ -19,12 +19,14 @@ interface Layer {
   contentTop: number;
   baseX: number;
   maxShift: number;
+  /** Height of the layer centre above the ridge line, in backdrop units. */
+  aboveRidge: number;
 }
 
 /**
  * The painted distance: sky, mountains, the landmark and near hills.
  * All layers hang in front of the camera behind the world, in a fixed order
- * (alphaIndex 0..4, not depth sorting). The bent ground covers their lower edges.
+ * (alphaIndex 0..4, not depth sorting). They sit on the valley ridge, which covers their lower edges.
  * Far layers shift less than near layers when the camera moves: parallax.
  */
 export class Backdrop {
@@ -32,6 +34,8 @@ export class Backdrop {
   private readonly layers: Layer[] = [];
   /** World x the layers are centred on (middle of the region). */
   centreX = 0;
+  /** Ridge height on screen the layers were laid out for; they follow from there. */
+  private readonly refFromTop = 0.25;
 
   constructor(
     private readonly scene: Scene,
@@ -55,7 +59,6 @@ export class Backdrop {
       const mat = createPaperMaterial(`backdropMat:${spec.id}`, this.scene, {
         texture: img.texture,
         alphaBlend: true,
-        curve: false,
         haze: false,
         layerHaze: true,
         depthWrite: false,
@@ -75,12 +78,13 @@ export class Backdrop {
         contentTop: img.placeholder ? 0 : content.top,
         baseX: 0,
         maxShift: 0,
+        aboveRidge: 0,
       });
     });
     this.layout();
   }
 
-  /** Places the layers for the current screen shape and horizon. Call after a resize. */
+  /** Sizes the layers for the current screen shape. Call after a resize. */
   layout(): void {
     const cam = this.rig.camera;
     const engine = this.scene.getEngine();
@@ -89,7 +93,7 @@ export class Backdrop {
     const halfH = d * Math.tan(cam.fov / 2);
     const halfW = halfH * aspect;
     const screenH = halfH * 2;
-    const horizonY = halfH * (1 - 2 * this.rig.horizonFromTop);
+    const horizonY = halfH * (1 - 2 * this.refFromTop);
     const overscan = TUNING.backdrop.overscan;
 
     for (const l of this.layers) {
@@ -99,10 +103,9 @@ export class Backdrop {
       let y: number;
       let x = 0;
       if (fit === 'cover') {
-        // The sky: full width. Its top part (from `crop`) starts at the top of the screen,
-        // and it reaches well below the horizon, where the ground covers it.
+        // The sky: full width and full height. Its top part (from `crop`) starts at the top of the screen.
         const crop = l.spec.crop ?? 0.12;
-        h = Math.max((halfW * 2 * 1.04) / l.aspect, (halfH - horizonY + screenH * 0.08) / (1 - crop - 0.1));
+        h = Math.max((halfW * 2 * 1.04) / l.aspect, screenH / (1 - crop));
         w = h * l.aspect;
         y = halfH + crop * h - h / 2;
         l.maxShift = 0;
@@ -121,21 +124,26 @@ export class Backdrop {
         y = top - h / 2;
       }
       l.baseX = x;
+      l.aboveRidge = y - horizonY;
       l.mesh.scaling.set(w, h, 1);
       l.mesh.position.set(x, y, d + (this.layers.length - this.layers.indexOf(l)) * 0.5);
     }
+    this.update();
   }
 
+  /** Follows the camera sideways (parallax) and the valley ridge up and down. */
   update(): void {
     const camX = this.rig.target.x;
-    const halfW =
-      TUNING.backdrop.distance *
-      Math.tan(this.rig.camera.fov / 2) *
-      (this.scene.getEngine().getRenderWidth() / Math.max(1, this.scene.getEngine().getRenderHeight()));
+    const halfH = TUNING.backdrop.distance * Math.tan(this.rig.camera.fov / 2);
+    const halfW = halfH * (this.scene.getEngine().getRenderWidth() / Math.max(1, this.scene.getEngine().getRenderHeight()));
+    const refY = halfH * (1 - 2 * this.refFromTop);
+    const ridgeY = halfH * (1 - 2 * this.rig.horizonFromTop);
     for (const l of this.layers) {
       if (l.maxShift <= 0) continue;
       const shift = -(camX - this.centreX) * (1 - l.spec.parallax) * TUNING.backdrop.shiftPerMetre * halfW * 2;
       l.mesh.position.x = l.baseX + Math.max(-l.maxShift, Math.min(l.maxShift, shift));
+      const follow = l.spec.follow ?? 1;
+      l.mesh.position.y = refY + (ridgeY - refY) * follow + l.aboveRidge;
     }
   }
 }

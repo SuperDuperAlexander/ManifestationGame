@@ -71,8 +71,10 @@ The world is **simple real 3D** that looks like **paper layers**.
 | Fairy, fog, glow, light bridge | Code: particles, shaders, emissive meshes |
 
 ### Camera
-- `ArcRotateCamera` or custom follow camera. **Fixed angle**: about 35–45° from above, three-quarter view.
+- `ArcRotateCamera` or custom follow camera. **Fixed angle**: about 22° from above, three-quarter view
+  (low enough that the sky shows above the valley ridge, see `docs/DECISIONS.md` D27).
 - The camera follows the player smoothly. The player **cannot rotate** it.
+- Paper cards that hide the player get a soft see-through hole (D29).
 - Reason: paper cards only look right from the front.
 - Paper cards face the camera direction (fixed orientation, or Y-axis billboard). Never full billboard.
 
@@ -97,7 +99,9 @@ The world is **simple real 3D** that looks like **paper layers**.
 ## 5. World structure
 
 - **Chapter = one open region.** A region has 5–8 **zones**.
-- Inside a region the player walks freely. No loading screens.
+- A region is a **closed valley**: a flat floor, hills around it, a low ridge to the north
+  with the painted backdrop behind it (`terrain.valley`, see `docs/DECISIONS.md` D25–D26).
+- Inside a region the player walks freely on the whole floor, not only on paths. No loading screens.
 - **Streaming**: only the current zone and its neighbours are loaded.
   Zones load in the background before the player reaches them. Far zones are disposed.
   Use `AssetContainer` per zone.
@@ -325,7 +329,7 @@ Fairy lines (drafts):
 ## 11. Milestones
 
 Build in this order. Finish and report after each one.
-**Status 2026-09-28:** 1–7 done. Next: Alexander's feedback (`docs/HANDOVER.md` section 6), then 8.
+**Status 2026-09-28:** 1–7 done. Alexander's feedback (valley, free walking, no ball look) done. Next: 8.
 
 1. **Setup + greybox**: Vite + TypeScript + Babylon.js. Sort assets into subfolders (9.1). Asset conversion script (9.2). Flat ground, placeholder props, procedural player, WASD, fixed follow camera, debug overlay.
 2. **Breathing**: `BreathSystem`, Space/Shift, glow + light ring, rhythm guide.

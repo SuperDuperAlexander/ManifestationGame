@@ -109,3 +109,39 @@ Settings: `TUNING.performance`, `src/core/Performance.ts`.
 
 **D24. Portrait phones get a wider view** (vertical field of view 1.0 instead of 0.72),
 so enough of the world fits left and right.
+
+## After playing — the valley (Alexander's feedback, 2026-09-28)
+
+**D25. The world bend (D4, D14) is gone.** It made the world look like a ball. Instead, chapter 1 is
+**one closed valley** (about 66 × 42 m instead of 140 × 70 m): a flat floor with soft hills around it.
+East and west hills are high (7 m), the south rim near the camera is low (2.2 m), and to the north the
+hills form a low ridge (3.2 m) and then fall away. The painted backdrop shows behind that ridge.
+Shape and heights come from `terrain.valley` in `ch1.json`; the maths is in `src/world/Valley.ts`.
+
+**D26. The player can walk everywhere on the valley floor.** Paths are only painted on the ground now.
+Only trees, stones, fog, water and the valley edge stop the player. The floor outline is
+`terrain.valley.floors` (a second outline is the ledge with the gate, beyond the chasm).
+
+**D27. Camera: still fixed (not rotatable), but lower and a bit wider** (22° from above, field of view 0.8,
+16 m away). Alexander chose this over a Messenger-style camera that turns: a turning camera would show
+the paper cards from the side and flip the painted light. This replaces the 35–45° in `CLAUDE.md` section 4.
+Paper cards now lean back 16°. Settings: `TUNING.camera`, `TUNING.cards.leanBackDeg`.
+
+**D28. The backdrop sits on the ridge.** Each frame the camera finds where the valley ridge meets the sky
+on screen, and the backdrop layers move up and down with it. Far layers follow a bit less
+(`follow` in the backdrop entries), so more mountain shows as you walk north.
+
+**D29. Trees and ruins turn see-through where they hide the player** (a soft dotted hole).
+With the lower camera, tall cards in front of the player would hide the red figure.
+Setting: `TUNING.cards.seeThroughRadius`.
+
+**D30. One draw call per image for all loaded zones.** In the valley all six zones are visible at once,
+so each zone drawing its own trees cost about 100 draw calls. Now all loaded zones share one card set
+per image: 39–65 draw calls. Streaming still loads and unloads zones as before.
+
+**D31. Hills get a painted shade** (brighter on slopes facing right, darker facing left), baked into
+the ground mesh like the light in the art. Setting: `TUNING.ground.slopeShade`.
+
+**D32. Test switches:** `scripts/check-browser.mjs` can use an installed Chromium with
+`CHROMIUM_PATH=/path/to/chromium`. The `partial` scenario waits for game events instead of fixed
+times, so it also works on slow computers.

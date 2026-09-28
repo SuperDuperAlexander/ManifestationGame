@@ -24,6 +24,11 @@ export interface BackdropLayer {
   x?: number;
   /** For "cover": share of the image hidden above the top of the screen. */
   crop?: number;
+  /**
+   * How much the layer moves up and down with the valley ridge on screen (0..1, default 1).
+   * Far layers follow a little less, so more of them shows as the player walks toward the ridge.
+   */
+  follow?: number;
 }
 
 export interface AssetMeta {
@@ -63,7 +68,7 @@ export interface PropSpec {
 export type GroundSpec =
   | { type: 'plane'; texture: string; size: Vec2; pos: Vec3 | Vec2; tile?: number }
   | { type: 'plaza'; texture: string; pos: Vec2; radius: Vec2; tile?: number; edge?: number }
-  | { type: 'path'; texture: string; points: Vec2[]; width: number; tile?: number; walkable?: boolean }
+  | { type: 'path'; texture: string; points: Vec2[]; width: number; tile?: number }
   | { type: 'water'; texture: string; points: Vec2[]; width: number; tile?: number; blocks?: boolean };
 
 export interface BlockadeSpec {
@@ -109,7 +114,10 @@ export interface ZoneSpec {
   /** World position of the zone's (0, 0). */
   origin: Vec2;
   neighbours: string[];
-  /** Walkable rectangles, local: [minX, minZ, maxX, maxZ]. */
+  /**
+   * The zone's region, local: [minX, minZ, maxX, maxZ]. Tells which zone the player is in.
+   * Where the player may walk comes from `terrain.valley.floors`, not from here.
+   */
   areas: [number, number, number, number][];
   ground: GroundSpec[];
   props: PropSpec[];
@@ -122,11 +130,30 @@ export interface ZoneSpec {
   events: ZoneEventSpec[];
 }
 
+/** A closed valley: a flat walkable floor with hills around it (see src/world/Valley.ts). */
+export interface ValleySpec {
+  /** Ground texture of floor and hills. */
+  texture: string;
+  tile?: number;
+  /** Walkable, flat ground: one or more outlines, world [x, z] points. */
+  floors: Vec2[][];
+  /** Middle of the valley. The hill height depends on the direction from here. */
+  centre: Vec2;
+  /**
+   * Hills around the floor: they reach full height `width` metres from the floor edge.
+   * `side` = east and west, `south` = near the camera, `north` = the low ridge in front of the backdrop.
+   */
+  rim: { width: number; side: number; south: number; north: number };
+  /** How far the hills reach beyond the floor, metres (default 28). */
+  margin?: number;
+  /** Grid size of the ground mesh, metres (default 1). Chasm edges should sit on this grid. */
+  cell?: number;
+}
+
 export interface TerrainSpec {
-  /** Base ground rectangles, world: rect [minX, minZ, maxX, maxZ]. */
-  ground: { texture: string; rect: [number, number, number, number]; tile?: number }[];
-  /** Paths between zones, world. Walkable by default. */
-  paths: { texture: string; points: Vec2[]; width: number; tile?: number; walkable?: boolean }[];
+  valley: ValleySpec;
+  /** Painted paths on the floor, world. Only a look: the whole floor is walkable. */
+  paths: { texture: string; points: Vec2[]; width: number; tile?: number }[];
   /** Rivers between zones, world. They block walking. */
   water: { texture: string; points: Vec2[]; width: number; tile?: number }[];
   /** Holes in the ground with cliff walls and mist, world. */
@@ -204,7 +231,7 @@ export function validateChapter(raw: unknown): { chapter: ChapterSpec; errors: s
     const zid = str(z.id, `${zp}.id`, `zone${i}`);
     if (!z.origin) warnings.push(`${zid}: no origin, using [0, 0]`);
     const areas = arr<[number, number, number, number]>(z.areas, `${zid}.areas`);
-    if (!areas.length) warnings.push(`${zid}: no walkable areas, using a 30 x 30 square`);
+    if (!areas.length) warnings.push(`${zid}: no areas, using a 30 x 30 square`);
     return {
       id: zid,
       origin: (z.origin as Vec2) ?? [0, 0],
@@ -232,8 +259,11 @@ export function validateChapter(raw: unknown): { chapter: ChapterSpec; errors: s
   }
 
   const t = (r.terrain ?? {}) as Record<string, unknown>;
+  const valley = t.valley as ValleySpec | undefined;
+  if (!valley || !Array.isArray(valley.floors) || !valley.floors.length) errors.push('terrain.valley.floors is missing');
+  if (valley && !valley.rim) errors.push('terrain.valley.rim is missing');
   const terrain: TerrainSpec = {
-    ground: arr(t.ground, 'terrain.ground'),
+    valley: valley ?? { texture: 'textures/ground_grass', floors: [], centre: [0, 0], rim: { width: 10, side: 6, south: 2, north: 3 } },
     paths: arr(t.paths, 'terrain.paths'),
     water: arr(t.water, 'terrain.water'),
     chasms: arr(t.chasms, 'terrain.chasms'),

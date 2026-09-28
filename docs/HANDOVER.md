@@ -41,8 +41,8 @@ Reference for movement and world feel: **Messenger** by Abeto (https://messenger
 | 1 | **Babylon.js**, browser game, mobile first | Alexander's choice. Runs everywhere, no install. |
 | 2 | Art style = **Design 3 "paper diorama"** (`docs/style-reference.png`) | Layered paper look maps directly onto 2.5D layers. Soft gradients look premium but cost no performance. |
 | 3 | **Diorama hybrid** instead of pure 2.5D parallax | Pure image layers only work on a camera rail. Alexander wants free walking. So: simple real 3D ground + paper-card props + painted parallax backdrops. |
-| 4 | **Fixed camera angle**, follows player, not rotatable | Paper cards only look right from the front. Also keeps rendering predictable and cheap. **Under review — see section 6.** |
-| 5 | **Open region per chapter** (5–8 zones), seamless streaming inside, soft fog-gate transition between chapters | Feels free, stays plannable, easy to extend chapter by chapter. Rejected: one fully open world (too hard to plan, test and extend). **Size and shape under review — see section 6.** |
+| 4 | **Fixed camera angle**, follows player, not rotatable. Since 2026-09-28 lower (22°) | Paper cards only look right from the front. Also keeps rendering predictable and cheap. Alexander confirmed this after looking at Messenger (D27). |
+| 5 | **Open region per chapter** (5–8 zones) = **one closed valley**, seamless streaming inside, soft fog-gate transition between chapters | Feels free, stays plannable, easy to extend chapter by chapter. Rejected: one fully open world (too hard to plan, test and extend). Compact valley since 2026-09-28 (D25). |
 | 6 | **Fog = blockade = loading cover** | Fog walls hide zone streaming. Story and tech fit together. |
 | 7 | **Breathing is the core mechanic**: Space = inhale, Shift = exhale; mobile: hold button = inhale, release = exhale | Alexander's idea. The lesson lives in the mechanic: force fails, breathing releases. |
 | 8 | Push/strike on fog **fails on purpose** (fog wobbles, grows denser); fairy says "Force doesn't help here. Breathe." | Alexander's idea. Teaches acceptance through play. |
@@ -87,6 +87,8 @@ Rejected duplicates (`sky_2`, `mountains_far_2`, `landmark_far_2`, `tree_round_2
 - Chapter 1 is playable from start to end: meadow, fairy intro, 6 fog blockades, light bridge, gate, "Chapter complete" card.
 - The old full-3D version lives in `legacy/GameLightWithin/` (reference only).
 - Automatic browser checks: `npm run check:browser -- --scenario <name>` (see `README.md`).
+- Alexander's feedback from section 6 is done (D25–D32): one compact closed valley, free walking on the
+  whole floor, no more ball look, lower fixed camera, see-through trees.
 - **Milestone 8 (polish) is not started.**
 
 ### Open questions (none blocks work)
@@ -114,8 +116,10 @@ What is known about Messenger (Three.js, 2025, by Abeto):
 - Controls: WASD / arrows, Space = jump, Shift = sprint. Runs on phones.
 - Its curvature works because the **whole world is a real 3D sphere with a 3D sky**. Ours bends only forward, while the painted backdrop stays flat — that mismatch causes the "ball" look.
 
-Note: a movable camera touches decision 4 (fixed camera, paper cards only look right from the front,
-and all art is lit from the right). Alexander must decide before this changes.
+Decision (Alexander): the camera stays fixed, but lower and closer. A turning camera would show paper cards
+from the side and flip the painted light.
+
+**Done 2026-09-28** — see `docs/DECISIONS.md` D25–D32.
 
 ---
 
@@ -124,10 +128,9 @@ and all art is lit from the right). Alexander must decide before this changes.
 1. Read `CLAUDE.md` fully.
 2. Open `docs/style-reference.png`.
 3. Read `docs/DECISIONS.md`.
-4. Work on the feedback in section 6: show Alexander a short plan in German first. Wait for his OK.
-5. Then milestone 8 (polish) from `CLAUDE.md`.
-6. After each step: build, test in browser, check console and debug overlay, git commit, 3-line German status. Continue unless blocked.
-7. Stop and ask only if: an asset is missing, a design decision is unclear, or a step fails after 2 fix attempts.
+4. Milestone 8 (polish) from `CLAUDE.md`: show Alexander a short plan in German first. Wait for his OK.
+5. After each step: build, test in browser, check console and debug overlay, git commit, 3-line German status. Continue unless blocked.
+6. Stop and ask only if: an asset is missing, a design decision is unclear, or a step fails after 2 fix attempts.
 
 ---
 
