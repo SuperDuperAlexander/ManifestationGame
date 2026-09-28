@@ -37,6 +37,7 @@ Read this file fully before every task. It is the source of truth.
 - Light: soft warm morning light. Lighting and shading are **painted into textures**, not computed.
 - Mood: calm, hopeful, sacred.
 - Player character: small figure in a **red cloak** with hood (stands out against green and stone).
+- **Style reference image:** `docs/style-reference.png`. Open it before any visual work. Match its look.
 
 Palette tokens (use these everywhere in code):
 
